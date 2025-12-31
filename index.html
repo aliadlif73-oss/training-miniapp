@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>آموزش‌های شرکت</title>
+  <style>
+    body { font-family: sans-serif; margin: 16px; }
+    .card { border: 1px solid #3333; border-radius: 12px; padding: 12px; margin-bottom: 10px; }
+    .row { display: flex; gap: 10px; align-items: center; justify-content: space-between; }
+    .btn { padding: 8px 10px; border: 1px solid #3333; border-radius: 10px; background: #fff; cursor: pointer; }
+    .muted { opacity: 0.7; font-size: 12px; line-height: 1.7; }
+    #playerBox { border: 1px dashed #3333; border-radius: 12px; padding: 12px; margin-top: 16px; }
+    video, audio { width: 100%; }
+    .badge { display:inline-block; padding: 2px 8px; border: 1px solid #3333; border-radius: 999px; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <h2>آموزش‌های شرکت</h2>
+  <div class="muted">نسخه MVP — لیست + پخش + ترکینگ درصد</div>
+
+  <div id="list" class="card">در حال دریافت لیست محتوا...</div>
+
+  <div id="playerBox" style="display:none;">
+    <div class="row">
+      <h3 id="nowTitle" style="margin:0;"></h3>
+      <span id="nowPercent" class="badge">0%</span>
+    </div>
+    <div id="playerArea" style="margin-top:10px;"></div>
+    <div class="muted" id="nowMeta" style="margin-top:10px;"></div>
+  </div>
+
+  <script>
+    // ====== تنظیمات Supabase (اطلاعات تو) ======
+    const SUPABASE_URL = "https://szjwrqzgiekjaggqsuoh.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_hkKIc6r7pSDCJsUvoOafrg_vK8xQc0F";
+
+    // ====== شناسه کاربر (فعلاً تستی) ======
+    // بعداً وقتی Mini App تلگرام رو وصل کردیم، این از تلگرام گرفته می‌شه.
+   function getTelegramId() {
+  try {
+    const tg = window.Telegram?.WebApp;
+    const id = tg?.initDataUnsafe?.user?.id;
+    if (id) return String(id);
+  } catch (e) {}
+  // اگر بیرون تلگرام بودیم (برای تست در مرورگر)
+  return "test_user_1";
+}
+
+const TELEGRAM_ID = getTelegramId();
+
+
+    // ====== ابزارهای کمکی ======
+    async function supabaseGet(path) {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+        headers: {
+          "apikey": SUPABASE_ANON_KEY,
+          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+        }
+      });
+      if (!res.ok) throw new Error(await res.text());
+      return res.json();
+    }
+
+    async function supabasePost(path, body, preferMerge=false) {
+      const headers = {
+        "apikey": SUPABASE_ANON_KEY,
+        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+        "Content-Type": "application/json",
+      };
+      if (preferMerge) headers["Prefer"] = "resolution=merge-duplicates";
+
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(body),
+      });
+
+      // بعضی وقت‌ها Supabase برای POST ممکنه body خالی برگردونه
+      if (!res.ok) {
+        const msg = await res.text();
+        throw new Error(msg);
+      }
+      return true;
+    }
+
+    function secondsToMin(sec) {
+      if (!sec && sec !== 0) return "—";
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      return `${m}:${String(s).padStart(2,'0')}`;
+    }
+
+    function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
+
+    function calcPercent(pos, duration) {
+      if (!duration || duration <= 0) return 0;
+      return clamp((pos / duration) * 100, 0, 100);
+    }
+
+    // ====== Progress (Save + Load) ======
+    async function loadProgress(contentId) {
+      // progress?select=...&telegram_id=eq.X&content_id=eq.Y
+      const rows = await supabaseGet(
+        `progress?select=last_position_seconds,max_position_seconds,completion_percent,updated_at`
+        + `&telegram_id=eq.${encodeURIComponent(TELEGRAM_ID)}`
+        + `&content_id=eq.${contentId}`
+        + `&limit=1`
+      );
+      if (!rows.length) return null;
+      return rows[0];
+    }
+
+    async function saveProgress(contentId, currentTime, durationSeconds) {
+      const pos = Math.floor(currentTime || 0);
+      const percent = calcPercent(pos, durationSeconds);
+
+      // UI درصد
+      document.getElementById("nowPercent").textContent = `${percent.toFixed(0)}%`;
+
+      // Upsert با Prefer merge duplicates (به خاطر unique(telegram_id, content_id))
+      await supabasePost("progress", {
+        telegram_id: TELEGRAM_ID,
+        content_id: contentId,
+        last_position_seconds: pos,
+        max_position_seconds: pos,
+        duration_seconds: durationSeconds || 0,
+        completion_percent: Number(percent.toFixed(2)),
+        active_seconds: pos, // MVP: ساده
+        updated_at: new Date().toISOString()
+      }, true);
+    }
+
+    // ====== UI List ======
+    function renderList(items) {
+      const el = document.getElementById("list");
+      el.innerHTML = "";
+
+      if (!items.length) {
+        el.innerHTML = "هیچ محتوایی ثبت نشده.";
+        return;
+      }
+
+      items.forEach(item => {
+        const div = document.createElement("div");
+        div.className = "card";
+        div.innerHTML = `
+          <div class="row">
+            <div>
+              <div><b>${item.title}</b></div>
+              <div class="muted">${item.type} • مدت: ${secondsToMin(item.duration_seconds)} • content_id: ${item.id}</div>
+            </div>
+            <button class="btn">پخش</button>
+          </div>
+        `;
+        div.querySelector("button").onclick = () => openPlayer(item);
+        el.appendChild(div);
+      });
+    }
+
+    // ====== Player + Tracking ======
+    async function openPlayer(item) {
+      const box = document.getElementById("playerBox");
+      const area = document.getElementById("playerArea");
+      const title = document.getElementById("nowTitle");
+      const meta = document.getElementById("nowMeta");
+
+      box.style.display = "block";
+      title.textContent = item.title;
+
+      // Progress قبلی (برای Resume)
+      let prev = null;
+      try {
+        prev = await loadProgress(item.id);
+      } catch (e) {
+        // اگر خطا خورد، باز هم پلیر را بالا میاریم
+        prev = null;
+      }
+
+      const lastPos = prev?.last_position_seconds || 0;
+      const prevPercent = prev?.completion_percent || 0;
+
+      document.getElementById("nowPercent").textContent = `${Number(prevPercent).toFixed(0)}%`;
+
+      meta.innerHTML = `
+        <div>کاربر (فعلاً تستی): <b>${TELEGRAM_ID}</b></div>
+        <div>نوع: <b>${item.type}</b> | مدت: <b>${secondsToMin(item.duration_seconds)}</b> | content_id: <b>${item.id}</b></div>
+        <div>آخرین نقطه ذخیره‌شده: <b>${secondsToMin(lastPos)}</b></div>
+        <div class="muted">هر ۱۰ ثانیه یک‌بار درصد ذخیره می‌شود.</div>
+      `;
+
+      area.innerHTML = "";
+
+      // ساخت پلیر
+      const isVideo = item.type === "video";
+      const media = document.createElement(isVideo ? "video" : "audio");
+      media.controls = true;
+      media.src = item.file_path;
+      if (isVideo) media.playsInline = true;
+
+      // Resume وقتی metadata آماده شد
+      media.addEventListener("loadedmetadata", () => {
+        // اگر مدت در دیتابیس دقیق نبود، از خود فایل هم می‌گیریم (اختیاری)
+        // ولی برای MVP همون duration_seconds کافی است.
+        if (lastPos > 0 && lastPos < (media.duration || 999999)) {
+          media.currentTime = lastPos;
+        }
+      });
+
+      // Tracking هر 10 ثانیه
+      let lastSentAt = 0;
+
+      media.addEventListener("timeupdate", () => {
+        // هر 10 ثانیه یکبار ذخیره
+        if (Math.abs(media.currentTime - lastSentAt) >= 10) {
+          lastSentAt = media.currentTime;
+          saveProgress(item.id, media.currentTime, item.duration_seconds).catch(()=>{});
+        } else {
+          // UI درصد لحظه‌ای (بدون ذخیره)
+          const p = calcPercent(Math.floor(media.currentTime), item.duration_seconds);
+          document.getElementById("nowPercent").textContent = `${p.toFixed(0)}%`;
+        }
+      });
+
+      // روی pause هم ذخیره کن
+      media.addEventListener("pause", () => {
+        saveProgress(item.id, media.currentTime, item.duration_seconds).catch(()=>{});
+      });
+
+      // روی پایان هم 100% کن
+      media.addEventListener("ended", () => {
+        saveProgress(item.id, item.duration_seconds || media.duration || 0, item.duration_seconds).catch(()=>{});
+      });
+
+      area.appendChild(media);
+
+      window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+    }
+
+    // ====== Init ======
+    (async () => {
+      try {
+        const items = await supabaseGet("contents?select=id,title,type,description,file_path,duration_seconds&order=id.desc");
+        renderList(items);
+      } catch (e) {
+        document.getElementById("list").innerHTML =
+          `<b>خطا در دریافت لیست محتوا</b><br><pre style="white-space:pre-wrap;">${e.message}</pre>`;
+      }
+    })();
+  </script>
+</body>
+</html>
