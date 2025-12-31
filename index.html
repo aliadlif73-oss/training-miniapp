@@ -4,53 +4,374 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>آموزش‌های شرکت</title>
+
+  <!-- فونت (اختیاری) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap" rel="stylesheet">
+
   <style>
-    body { font-family: sans-serif; margin: 16px; }
-    .card { border: 1px solid #3333; border-radius: 12px; padding: 12px; margin-bottom: 10px; }
-    .row { display: flex; gap: 10px; align-items: center; justify-content: space-between; }
-    .btn { padding: 8px 10px; border: 1px solid #3333; border-radius: 10px; background: #fff; cursor: pointer; }
-    .muted { opacity: 0.7; font-size: 12px; line-height: 1.7; }
-    #playerBox { border: 1px dashed #3333; border-radius: 12px; padding: 12px; margin-top: 16px; }
-    video, audio { width: 100%; }
-    .badge { display:inline-block; padding: 2px 8px; border: 1px solid #3333; border-radius: 999px; font-size: 12px; }
+    :root{
+      --bg: #f7f7fb;
+      --card: #ffffff;
+      --text: #111827;
+      --muted: #6b7280;
+      --border: rgba(17,24,39,.10);
+      --shadow: 0 8px 24px rgba(17,24,39,.08);
+      --primary: #2563eb;
+      --primary-weak: rgba(37,99,235,.12);
+      --success: #16a34a;
+      --danger: #dc2626;
+      --radius: 18px;
+    }
+
+    /* Telegram Theme (اگر داخل تلگرام باشیم، اینا override می‌شن) */
+    body.tg {
+      --bg: var(--tg-theme-bg-color, #f7f7fb);
+      --card: var(--tg-theme-secondary-bg-color, #ffffff);
+      --text: var(--tg-theme-text-color, #111827);
+      --muted: var(--tg-theme-hint-color, #6b7280);
+      --primary: var(--tg-theme-button-color, #2563eb);
+    }
+    body.tg .btnPrimary{
+      color: var(--tg-theme-button-text-color, #ffffff);
+    }
+
+    @media (prefers-color-scheme: dark){
+      :root{
+        --bg:#0b1220;
+        --card:#0f172a;
+        --text:#e5e7eb;
+        --muted:#9ca3af;
+        --border: rgba(229,231,235,.10);
+        --shadow: 0 10px 26px rgba(0,0,0,.35);
+        --primary:#60a5fa;
+        --primary-weak: rgba(96,165,250,.14);
+      }
+    }
+
+    *{ box-sizing: border-box; }
+    body{
+      margin:0;
+      font-family: Vazirmatn, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .wrap{
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 18px 16px 28px;
+    }
+
+    .topbar{
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      padding: 14px 0 10px;
+      background: linear-gradient(to bottom, var(--bg), rgba(0,0,0,0));
+      backdrop-filter: blur(8px);
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+    }
+
+    .title{
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      margin: 0;
+    }
+
+    .subtitle{
+      margin-top: 6px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.35);
+    }
+
+    .dot{
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 0 6px rgba(22,163,74,.12);
+    }
+
+    .controls{
+      margin-top: 12px;
+      display:grid;
+      grid-template-columns: 1fr 180px;
+      gap: 10px;
+    }
+    @media (max-width: 640px){
+      .controls{ grid-template-columns: 1fr; }
+    }
+
+    .search{
+      width:100%;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      outline: none;
+      box-shadow: 0 1px 0 rgba(0,0,0,.02);
+    }
+    .search::placeholder{ color: rgba(107,114,128,.9); }
+
+    .seg{
+      display:flex;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow:hidden;
+    }
+    .seg button{
+      flex:1;
+      padding: 10px 10px;
+      border:0;
+      background: transparent;
+      cursor:pointer;
+      color: var(--muted);
+      font-weight: 700;
+      font-family: inherit;
+    }
+    .seg button.active{
+      color: var(--primary);
+      background: var(--primary-weak);
+    }
+
+    .grid{
+      margin-top: 14px;
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 820px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+
+    .card{
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+
+    .itemHead{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 12px;
+    }
+
+    .itemTitle{
+      font-weight: 800;
+      margin: 0 0 6px;
+      font-size: 16px;
+      line-height: 1.4;
+    }
+    .meta{
+      font-size: 13px;
+      color: var(--muted);
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items:center;
+    }
+
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap: 6px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.25);
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .btnPrimary{
+      border: 0;
+      border-radius: 14px;
+      padding: 10px 12px;
+      cursor:pointer;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 800;
+      font-family: inherit;
+      white-space: nowrap;
+      box-shadow: 0 10px 18px rgba(37,99,235,.18);
+    }
+    .btnPrimary:active{ transform: translateY(1px); }
+
+    .progressRow{
+      margin-top: 12px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+    }
+    .bar{
+      flex:1;
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(107,114,128,.18);
+      overflow:hidden;
+      border: 1px solid var(--border);
+    }
+    .bar > div{
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--primary), #22c55e);
+      border-radius: 999px;
+      transition: width .25s ease;
+    }
+    .percent{
+      font-weight: 900;
+      color: var(--text);
+      min-width: 46px;
+      text-align:left;
+    }
+
+    /* Player */
+    .playerWrap{
+      margin-top: 14px;
+      display:none;
+    }
+    .playerHead{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .playerTitle{
+      margin:0;
+      font-size: 16px;
+      font-weight: 900;
+    }
+    .playerMeta{
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12.5px;
+      line-height: 1.7;
+    }
+    video,audio{
+      width:100%;
+      border-radius: 14px;
+      outline:none;
+      background: rgba(0,0,0,.04);
+    }
+
+    .hint{
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .empty{
+      margin-top: 12px;
+      padding: 18px;
+      text-align:center;
+      color: var(--muted);
+    }
+
+    .debug{
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--muted);
+      border-top: 1px dashed var(--border);
+      padding-top: 10px;
+      display:none;
+      white-space: pre-wrap;
+    }
+    body.debug .debug{ display:block; }
   </style>
 </head>
+
 <body>
-  <h2>آموزش‌های شرکت</h2>
-  <div class="muted">نسخه MVP — لیست + پخش + ترکینگ درصد</div>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <div>
+          <h1 class="title">آموزش‌های شرکت</h1>
+          <div class="subtitle">نسخه MVP — لیست + پخش + ترکینگ درصد</div>
+        </div>
+        <div class="pill" title="وضعیت سرویس">
+          <span class="dot"></span>
+          <span style="font-weight:800;color:var(--muted);font-size:13px;">Online</span>
+        </div>
+      </div>
 
-  <div id="list" class="card">در حال دریافت لیست محتوا...</div>
-
-  <div id="playerBox" style="display:none;">
-    <div class="row">
-      <h3 id="nowTitle" style="margin:0;"></h3>
-      <span id="nowPercent" class="badge">0%</span>
+      <div class="controls">
+        <input id="q" class="search" placeholder="جستجو در آموزش‌ها (مثلاً: فروش، محصول، ...)" />
+        <div class="seg" role="tablist" aria-label="فیلتر نوع محتوا">
+          <button id="f_all" class="active" type="button">همه</button>
+          <button id="f_audio" type="button">پادکست</button>
+          <button id="f_video" type="button">ویدیو</button>
+        </div>
+      </div>
     </div>
-    <div id="playerArea" style="margin-top:10px;"></div>
-    <div class="muted" id="nowMeta" style="margin-top:10px;"></div>
+
+    <div id="list" class="grid"></div>
+
+    <div id="playerCard" class="card playerWrap">
+      <div class="playerHead">
+        <h3 id="nowTitle" class="playerTitle"></h3>
+        <div class="tag" id="nowPercent">0%</div>
+      </div>
+      <div id="playerArea"></div>
+      <div class="playerMeta" id="nowMeta"></div>
+      <div class="hint">هر ۱۰ ثانیه یک‌بار پیشرفت ذخیره می‌شود. اگر خارج شوید، دفعه بعد از همان‌جا ادامه می‌دهد.</div>
+
+      <div class="debug" id="debugBox"></div>
+    </div>
   </div>
 
   <script>
-    // ====== تنظیمات Supabase (اطلاعات تو) ======
+    // ====== Supabase (اطلاعات تو) ======
     const SUPABASE_URL = "https://szjwrqzgiekjaggqsuoh.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_hkKIc6r7pSDCJsUvoOafrg_vK8xQc0F";
 
-    // ====== شناسه کاربر (فعلاً تستی) ======
-    // بعداً وقتی Mini App تلگرام رو وصل کردیم، این از تلگرام گرفته می‌شه.
-   function getTelegramId() {
-  try {
+    // ====== Debug mode: ?debug=1 ======
+    const DEBUG = new URLSearchParams(location.search).get("debug") === "1";
+    if (DEBUG) document.body.classList.add("debug");
+
+    // ====== Telegram detect + theme ======
     const tg = window.Telegram?.WebApp;
-    const id = tg?.initDataUnsafe?.user?.id;
-    if (id) return String(id);
-  } catch (e) {}
-  // اگر بیرون تلگرام بودیم (برای تست در مرورگر)
-  return "test_user_1";
-}
+    if (tg) {
+      document.body.classList.add("tg");
+      try { tg.expand(); } catch(e){}
+    }
 
-const TELEGRAM_ID = getTelegramId();
+    function getTelegramId() {
+      try {
+        const id = tg?.initDataUnsafe?.user?.id;
+        if (id) return String(id);
+      } catch(e){}
+      return "test_user_1"; // بیرون تلگرام برای تست
+    }
+    const TELEGRAM_ID = getTelegramId();
 
+    // ====== Helpers ======
+    const $ = (id) => document.getElementById(id);
 
-    // ====== ابزارهای کمکی ======
     async function supabaseGet(path) {
       const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
         headers: {
@@ -75,50 +396,40 @@ const TELEGRAM_ID = getTelegramId();
         headers,
         body: JSON.stringify(body),
       });
-
-      // بعضی وقت‌ها Supabase برای POST ممکنه body خالی برگردونه
-      if (!res.ok) {
-        const msg = await res.text();
-        throw new Error(msg);
-      }
+      if (!res.ok) throw new Error(await res.text());
       return true;
     }
 
     function secondsToMin(sec) {
-      if (!sec && sec !== 0) return "—";
+      sec = Math.max(0, Math.floor(sec || 0));
       const m = Math.floor(sec / 60);
       const s = sec % 60;
       return `${m}:${String(s).padStart(2,'0')}`;
     }
 
     function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
-
     function calcPercent(pos, duration) {
       if (!duration || duration <= 0) return 0;
       return clamp((pos / duration) * 100, 0, 100);
     }
 
-    // ====== Progress (Save + Load) ======
+    // ====== Progress ======
     async function loadProgress(contentId) {
-      // progress?select=...&telegram_id=eq.X&content_id=eq.Y
       const rows = await supabaseGet(
-        `progress?select=last_position_seconds,max_position_seconds,completion_percent,updated_at`
+        `progress?select=last_position_seconds,completion_percent,updated_at`
         + `&telegram_id=eq.${encodeURIComponent(TELEGRAM_ID)}`
         + `&content_id=eq.${contentId}`
         + `&limit=1`
       );
-      if (!rows.length) return null;
-      return rows[0];
+      return rows[0] || null;
     }
 
     async function saveProgress(contentId, currentTime, durationSeconds) {
       const pos = Math.floor(currentTime || 0);
       const percent = calcPercent(pos, durationSeconds);
 
-      // UI درصد
-      document.getElementById("nowPercent").textContent = `${percent.toFixed(0)}%`;
+      $("nowPercent").textContent = `${percent.toFixed(0)}%`;
 
-      // Upsert با Prefer merge duplicates (به خاطر unique(telegram_id, content_id))
       await supabasePost("progress", {
         telegram_id: TELEGRAM_ID,
         content_id: contentId,
@@ -126,127 +437,167 @@ const TELEGRAM_ID = getTelegramId();
         max_position_seconds: pos,
         duration_seconds: durationSeconds || 0,
         completion_percent: Number(percent.toFixed(2)),
-        active_seconds: pos, // MVP: ساده
+        active_seconds: pos,
         updated_at: new Date().toISOString()
       }, true);
     }
 
-    // ====== UI List ======
-    function renderList(items) {
-      const el = document.getElementById("list");
-      el.innerHTML = "";
+    // ====== State ======
+    let ALL = [];
+    let FILTER = "all"; // all | audio | video
+
+    // ====== UI Render ======
+    function typeLabel(t){
+      return t === "audio" ? "پادکست" : "ویدیو";
+    }
+
+    function renderList(items){
+      const list = $("list");
+      list.innerHTML = "";
 
       if (!items.length) {
-        el.innerHTML = "هیچ محتوایی ثبت نشده.";
+        list.innerHTML = `<div class="card empty">موردی پیدا نشد.</div>`;
         return;
       }
 
       items.forEach(item => {
-        const div = document.createElement("div");
-        div.className = "card";
-        div.innerHTML = `
-          <div class="row">
-            <div>
-              <div><b>${item.title}</b></div>
-              <div class="muted">${item.type} • مدت: ${secondsToMin(item.duration_seconds)} • content_id: ${item.id}</div>
+        const card = document.createElement("div");
+        card.className = "card";
+
+        card.innerHTML = `
+          <div class="itemHead">
+            <div style="flex:1;">
+              <div class="itemTitle">${item.title}</div>
+              <div class="meta">
+                <span class="tag">${typeLabel(item.type)}</span>
+                <span class="tag">مدت ${secondsToMin(item.duration_seconds)}</span>
+              </div>
             </div>
-            <button class="btn">پخش</button>
+            <button class="btnPrimary">پخش</button>
+          </div>
+
+          <div class="progressRow">
+            <div class="bar"><div id="bar_${item.id}"></div></div>
+            <div class="percent" id="pct_${item.id}">—</div>
           </div>
         `;
-        div.querySelector("button").onclick = () => openPlayer(item);
-        el.appendChild(div);
+
+        card.querySelector("button").onclick = () => openPlayer(item);
+
+        list.appendChild(card);
+
+        // پر کردن درصد قبلی روی کارت (اگر وجود داشته باشد)
+        loadProgress(item.id).then(p => {
+          const pct = p?.completion_percent ?? null;
+          const w = pct == null ? 0 : pct;
+          const pctEl = document.getElementById(`pct_${item.id}`);
+          const barEl = document.getElementById(`bar_${item.id}`);
+          if (pctEl && barEl){
+            pctEl.textContent = pct == null ? "0%" : `${Number(pct).toFixed(0)}%`;
+            barEl.style.width = `${w}%`;
+          }
+        }).catch(()=>{});
       });
     }
 
-    // ====== Player + Tracking ======
-    async function openPlayer(item) {
-      const box = document.getElementById("playerBox");
-      const area = document.getElementById("playerArea");
-      const title = document.getElementById("nowTitle");
-      const meta = document.getElementById("nowMeta");
+    function applyFilters(){
+      const q = ($("q").value || "").trim().toLowerCase();
+      let items = [...ALL];
 
-      box.style.display = "block";
-      title.textContent = item.title;
+      if (FILTER !== "all") items = items.filter(x => x.type === FILTER);
+      if (q) items = items.filter(x => (x.title || "").toLowerCase().includes(q));
 
-      // Progress قبلی (برای Resume)
+      renderList(items);
+    }
+
+    // ====== Player ======
+    async function openPlayer(item){
+      $("playerCard").style.display = "block";
+      $("nowTitle").textContent = item.title;
+
       let prev = null;
-      try {
-        prev = await loadProgress(item.id);
-      } catch (e) {
-        // اگر خطا خورد، باز هم پلیر را بالا میاریم
-        prev = null;
-      }
+      try { prev = await loadProgress(item.id); } catch(e){ prev = null; }
 
       const lastPos = prev?.last_position_seconds || 0;
-      const prevPercent = prev?.completion_percent || 0;
+      const prevPct = prev?.completion_percent || 0;
 
-      document.getElementById("nowPercent").textContent = `${Number(prevPercent).toFixed(0)}%`;
-
-      meta.innerHTML = `
-        <div>کاربر (فعلاً تستی): <b>${TELEGRAM_ID}</b></div>
-        <div>نوع: <b>${item.type}</b> | مدت: <b>${secondsToMin(item.duration_seconds)}</b> | content_id: <b>${item.id}</b></div>
-        <div>آخرین نقطه ذخیره‌شده: <b>${secondsToMin(lastPos)}</b></div>
-        <div class="muted">هر ۱۰ ثانیه یک‌بار درصد ذخیره می‌شود.</div>
+      $("nowPercent").textContent = `${Number(prevPct).toFixed(0)}%`;
+      $("nowMeta").innerHTML = `
+        <span class="tag">${typeLabel(item.type)}</span>
+        <span class="tag">مدت ${secondsToMin(item.duration_seconds)}</span>
+        <span class="tag">آخرین نقطه ${secondsToMin(lastPos)}</span>
       `;
 
+      // Debug info (only if ?debug=1)
+      $("debugBox").textContent = DEBUG
+        ? `telegram_id: ${TELEGRAM_ID}\ncontent_id: ${item.id}\nfile: ${item.file_path}\nlast_saved: ${secondsToMin(lastPos)}`
+        : "";
+
+      const area = $("playerArea");
       area.innerHTML = "";
 
-      // ساخت پلیر
       const isVideo = item.type === "video";
       const media = document.createElement(isVideo ? "video" : "audio");
       media.controls = true;
       media.src = item.file_path;
       if (isVideo) media.playsInline = true;
 
-      // Resume وقتی metadata آماده شد
       media.addEventListener("loadedmetadata", () => {
-        // اگر مدت در دیتابیس دقیق نبود، از خود فایل هم می‌گیریم (اختیاری)
-        // ولی برای MVP همون duration_seconds کافی است.
+        // Resume
         if (lastPos > 0 && lastPos < (media.duration || 999999)) {
           media.currentTime = lastPos;
         }
       });
 
-      // Tracking هر 10 ثانیه
       let lastSentAt = 0;
 
       media.addEventListener("timeupdate", () => {
-        // هر 10 ثانیه یکبار ذخیره
+        const p = calcPercent(Math.floor(media.currentTime), item.duration_seconds);
+        $("nowPercent").textContent = `${p.toFixed(0)}%`;
+
         if (Math.abs(media.currentTime - lastSentAt) >= 10) {
           lastSentAt = media.currentTime;
           saveProgress(item.id, media.currentTime, item.duration_seconds).catch(()=>{});
-        } else {
-          // UI درصد لحظه‌ای (بدون ذخیره)
-          const p = calcPercent(Math.floor(media.currentTime), item.duration_seconds);
-          document.getElementById("nowPercent").textContent = `${p.toFixed(0)}%`;
         }
       });
 
-      // روی pause هم ذخیره کن
       media.addEventListener("pause", () => {
         saveProgress(item.id, media.currentTime, item.duration_seconds).catch(()=>{});
       });
 
-      // روی پایان هم 100% کن
       media.addEventListener("ended", () => {
         saveProgress(item.id, item.duration_seconds || media.duration || 0, item.duration_seconds).catch(()=>{});
       });
 
       area.appendChild(media);
 
+      // اسکرول نرم به پلیر
       window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
     }
 
     // ====== Init ======
     (async () => {
       try {
-        const items = await supabaseGet("contents?select=id,title,type,description,file_path,duration_seconds&order=id.desc");
-        renderList(items);
+        ALL = await supabaseGet("contents?select=id,title,type,file_path,duration_seconds&order=id.desc");
+        applyFilters();
       } catch (e) {
-        document.getElementById("list").innerHTML =
-          `<b>خطا در دریافت لیست محتوا</b><br><pre style="white-space:pre-wrap;">${e.message}</pre>`;
+        $("list").innerHTML = `<div class="card empty">خطا در دریافت لیست محتوا<br><div style="margin-top:8px;color:var(--muted);font-size:12px;white-space:pre-wrap;">${e.message}</div></div>`;
       }
     })();
+
+    // ====== Controls ======
+    $("q").addEventListener("input", () => applyFilters());
+
+    function setFilter(f){
+      FILTER = f;
+      $("f_all").classList.toggle("active", f==="all");
+      $("f_audio").classList.toggle("active", f==="audio");
+      $("f_video").classList.toggle("active", f==="video");
+      applyFilters();
+    }
+    $("f_all").onclick = () => setFilter("all");
+    $("f_audio").onclick = () => setFilter("audio");
+    $("f_video").onclick = () => setFilter("video");
   </script>
 </body>
 </html>
