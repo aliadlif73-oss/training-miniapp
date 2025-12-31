@@ -1,65 +1,50 @@
-<!doctype html>
+<!doctype html><!doctype html>
 <html lang="fa" dir="rtl">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>آموزش‌های شرکت</title>
+  <title>آکادمی سیلانه سبز</title>
 
-  <!-- فونت (اختیاری) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap" rel="stylesheet">
 
   <style>
     :root{
-      --bg: #f7f7fb;
-      --card: #ffffff;
-      --text: #111827;
-      --muted: #6b7280;
-      --border: rgba(17,24,39,.10);
-      --shadow: 0 8px 24px rgba(17,24,39,.08);
-      --primary: #2563eb;
-      --primary-weak: rgba(37,99,235,.12);
-      --success: #16a34a;
-      --danger: #dc2626;
+      --bg:#0b1220;
+      --card:#0f172a;
+      --text:#e5e7eb;
+      --muted:#9ca3af;
+      --border: rgba(229,231,235,.10);
+      --shadow: 0 10px 26px rgba(0,0,0,.35);
+      --primary:#60a5fa;
+      --primary-weak: rgba(96,165,250,.14);
+      --success:#22c55e;
+      --danger:#ef4444;
       --radius: 18px;
     }
 
-    /* Telegram Theme (اگر داخل تلگرام باشیم، اینا override می‌شن) */
     body.tg {
-      --bg: var(--tg-theme-bg-color, #f7f7fb);
-      --card: var(--tg-theme-secondary-bg-color, #ffffff);
-      --text: var(--tg-theme-text-color, #111827);
-      --muted: var(--tg-theme-hint-color, #6b7280);
-      --primary: var(--tg-theme-button-color, #2563eb);
-    }
-    body.tg .btnPrimary{
-      color: var(--tg-theme-button-text-color, #ffffff);
-    }
-
-    @media (prefers-color-scheme: dark){
-      :root{
-        --bg:#0b1220;
-        --card:#0f172a;
-        --text:#e5e7eb;
-        --muted:#9ca3af;
-        --border: rgba(229,231,235,.10);
-        --shadow: 0 10px 26px rgba(0,0,0,.35);
-        --primary:#60a5fa;
-        --primary-weak: rgba(96,165,250,.14);
-      }
+      --bg: var(--tg-theme-bg-color, #0b1220);
+      --card: var(--tg-theme-secondary-bg-color, #0f172a);
+      --text: var(--tg-theme-text-color, #e5e7eb);
+      --muted: var(--tg-theme-hint-color, #9ca3af);
+      --primary: var(--tg-theme-button-color, #60a5fa);
     }
 
     *{ box-sizing: border-box; }
     body{
       margin:0;
       font-family: Vazirmatn, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      background: var(--bg);
+      background: radial-gradient(1200px 700px at 70% -10%, rgba(96,165,250,.12), transparent 60%),
+                  radial-gradient(1000px 700px at 10% 0%, rgba(34,197,94,.10), transparent 55%),
+                  var(--bg);
       color: var(--text);
+      overflow-x:hidden;
     }
 
     .wrap{
-      max-width: 920px;
+      max-width: 980px;
       margin: 0 auto;
       padding: 18px 16px 28px;
     }
@@ -69,8 +54,8 @@
       top: 0;
       z-index: 10;
       padding: 14px 0 10px;
-      background: linear-gradient(to bottom, var(--bg), rgba(0,0,0,0));
-      backdrop-filter: blur(8px);
+      background: linear-gradient(to bottom, rgba(11,18,32,.92), rgba(11,18,32,.65), rgba(11,18,32,0));
+      backdrop-filter: blur(10px);
     }
 
     .brand{
@@ -80,11 +65,38 @@
       gap: 12px;
     }
 
+    .brandRight{
+      display:flex;
+      align-items:flex-start;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .logo{
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid var(--border);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:hidden;
+      flex: 0 0 auto;
+      box-shadow: 0 10px 20px rgba(0,0,0,.25);
+    }
+    .logo img{ width: 100%; height: 100%; object-fit: cover; }
+
     .title{
       font-size: 22px;
-      font-weight: 800;
+      font-weight: 900;
       letter-spacing: -0.3px;
       margin: 0;
+      line-height: 1.2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 72vw;
     }
 
     .subtitle{
@@ -100,22 +112,32 @@
       padding: 8px 12px;
       border-radius: 999px;
       border: 1px solid var(--border);
-      background: rgba(255,255,255,.35);
+      background: rgba(255,255,255,.05);
+      color: var(--muted);
+      font-weight: 800;
+      font-size: 13px;
+      white-space: nowrap;
     }
 
-    .dot{
-      width: 8px; height: 8px; border-radius: 50%;
-      background: var(--success);
-      box-shadow: 0 0 0 6px rgba(22,163,74,.12);
+    .btnGhost{
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 14px;
+      cursor:pointer;
+      font-family: inherit;
+      font-weight: 900;
     }
+    .btnGhost:active{ transform: translateY(1px); }
 
     .controls{
       margin-top: 12px;
       display:grid;
-      grid-template-columns: 1fr 180px;
+      grid-template-columns: 1fr 240px;
       gap: 10px;
     }
-    @media (max-width: 640px){
+    @media (max-width: 700px){
       .controls{ grid-template-columns: 1fr; }
     }
 
@@ -124,16 +146,16 @@
       padding: 12px 14px;
       border-radius: 14px;
       border: 1px solid var(--border);
-      background: var(--card);
+      background: rgba(255,255,255,.04);
       color: var(--text);
       outline: none;
       box-shadow: 0 1px 0 rgba(0,0,0,.02);
     }
-    .search::placeholder{ color: rgba(107,114,128,.9); }
+    .search::placeholder{ color: rgba(156,163,175,.9); }
 
     .seg{
       display:flex;
-      background: var(--card);
+      background: rgba(255,255,255,.04);
       border: 1px solid var(--border);
       border-radius: 14px;
       overflow:hidden;
@@ -145,12 +167,33 @@
       background: transparent;
       cursor:pointer;
       color: var(--muted);
-      font-weight: 700;
+      font-weight: 900;
       font-family: inherit;
     }
     .seg button.active{
       color: var(--primary);
       background: var(--primary-weak);
+    }
+
+    .toolbar{
+      margin-top: 10px;
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items:center;
+      justify-content: space-between;
+    }
+
+    .select{
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 14px;
+      font-family: inherit;
+      font-weight: 900;
+      outline:none;
+      min-width: 220px;
     }
 
     .grid{
@@ -159,14 +202,14 @@
       grid-template-columns: 1fr 1fr;
       gap: 12px;
     }
-    @media (max-width: 820px){
+    @media (max-width: 860px){
       .grid{ grid-template-columns: 1fr; }
     }
 
     .card{
-      background: var(--card);
+      background: rgba(15,23,42,.75);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
+      border-radius: 22px;
       box-shadow: var(--shadow);
       padding: 14px;
     }
@@ -179,11 +222,12 @@
     }
 
     .itemTitle{
-      font-weight: 800;
+      font-weight: 900;
       margin: 0 0 6px;
       font-size: 16px;
       line-height: 1.4;
     }
+
     .meta{
       font-size: 13px;
       color: var(--muted);
@@ -197,28 +241,50 @@
       display:inline-flex;
       align-items:center;
       gap: 6px;
-      padding: 5px 10px;
+      padding: 6px 10px;
       border-radius: 999px;
       border: 1px solid var(--border);
-      background: rgba(255,255,255,.25);
+      background: rgba(255,255,255,.05);
       font-size: 12px;
       color: var(--muted);
-      font-weight: 700;
+      font-weight: 900;
     }
 
     .btnPrimary{
       border: 0;
-      border-radius: 14px;
-      padding: 10px 12px;
+      border-radius: 16px;
+      padding: 10px 14px;
       cursor:pointer;
       background: var(--primary);
-      color: #fff;
-      font-weight: 800;
+      color: #071023;
+      font-weight: 900;
       font-family: inherit;
       white-space: nowrap;
-      box-shadow: 0 10px 18px rgba(37,99,235,.18);
+      box-shadow: 0 12px 22px rgba(96,165,250,.18);
+    }
+    body.tg .btnPrimary{
+      color: var(--tg-theme-button-text-color, #071023);
     }
     .btnPrimary:active{ transform: translateY(1px); }
+
+    .likeBtn{
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 16px;
+      cursor:pointer;
+      font-family: inherit;
+      font-weight: 900;
+      display:inline-flex;
+      gap: 8px;
+      align-items:center;
+    }
+    .likeBtn.liked{
+      border-color: rgba(96,165,250,.45);
+      background: rgba(96,165,250,.14);
+      color: var(--primary);
+    }
 
     .progressRow{
       margin-top: 12px;
@@ -231,58 +297,89 @@
       flex:1;
       height: 10px;
       border-radius: 999px;
-      background: rgba(107,114,128,.18);
+      background: rgba(156,163,175,.16);
       overflow:hidden;
       border: 1px solid var(--border);
     }
     .bar > div{
       height: 100%;
       width: 0%;
-      background: linear-gradient(90deg, var(--primary), #22c55e);
+      background: linear-gradient(90deg, var(--primary), var(--success));
       border-radius: 999px;
       transition: width .25s ease;
     }
     .percent{
       font-weight: 900;
       color: var(--text);
-      min-width: 46px;
+      min-width: 44px;
       text-align:left;
     }
 
-    /* Player */
-    .playerWrap{
+    /* Category gate */
+    .catGrid{
       margin-top: 14px;
-      display:none;
+      display:grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
     }
-    .playerHead{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap: 10px;
-      margin-bottom: 10px;
+    @media (max-width: 700px){
+      .catGrid{ grid-template-columns: 1fr; }
     }
-    .playerTitle{
-      margin:0;
+    .catCard{
+      padding: 16px;
+      border-radius: 22px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      cursor: pointer;
+      box-shadow: var(--shadow);
+    }
+    .catCard:active{ transform: translateY(1px); }
+    .catName{
       font-size: 16px;
       font-weight: 900;
+      margin: 0 0 6px;
     }
-    .playerMeta{
-      margin-top: 8px;
+    .catDesc{
+      margin: 0;
       color: var(--muted);
-      font-size: 12.5px;
-      line-height: 1.7;
+      font-size: 13px;
+      line-height: 1.6;
     }
-    video,audio{
-      width:100%;
-      border-radius: 14px;
-      outline:none;
-      background: rgba(0,0,0,.04);
+
+    /* Continue watching + summary */
+    .row2{
+      margin-top: 12px;
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 860px){
+      .row2{ grid-template-columns: 1fr; }
+    }
+    .bigStat{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 10px;
+    }
+    .bigStat h3{
+      margin:0;
+      font-size: 14px;
+      font-weight: 900;
+      color: var(--muted);
+    }
+    .bigStat .value{
+      margin-top: 8px;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: -0.3px;
     }
 
     .hint{
       margin-top: 10px;
       color: var(--muted);
       font-size: 12px;
+      line-height: 1.7;
     }
 
     .empty{
@@ -292,16 +389,128 @@
       color: var(--muted);
     }
 
-    .debug{
-      margin-top: 10px;
-      font-size: 12px;
-      color: var(--muted);
-      border-top: 1px dashed var(--border);
-      padding-top: 10px;
+    /* Player modal (focus mode) */
+    .overlay{
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.55);
       display:none;
-      white-space: pre-wrap;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      z-index: 999;
     }
-    body.debug .debug{ display:block; }
+    .overlay.show{ display:flex; }
+    .playerModal{
+      width: min(980px, 96vw);
+      max-height: 92vh;
+      overflow:auto;
+      background: rgba(15,23,42,.92);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      box-shadow: 0 24px 60px rgba(0,0,0,.45);
+      padding: 16px;
+    }
+    .playerHead{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 12px;
+    }
+    .playerTitle{
+      margin:0;
+      font-size: 16px;
+      font-weight: 900;
+      line-height: 1.5;
+    }
+    .closeBtn{
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 14px;
+      cursor:pointer;
+      font-family: inherit;
+      font-weight: 900;
+    }
+
+    video,audio{
+      width:100%;
+      border-radius: 16px;
+      outline:none;
+      background: rgba(0,0,0,.25);
+      margin-top: 12px;
+    }
+
+    .motivate{
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    /* Onboarding modal */
+    .modalBackdrop{
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.60);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      z-index: 1000;
+    }
+    .modalBackdrop.show{ display:flex; }
+    .modal{
+      width: min(560px, 96vw);
+      background: rgba(15,23,42,.95);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      box-shadow: 0 24px 60px rgba(0,0,0,.55);
+      padding: 16px;
+    }
+    .modal h2{
+      margin: 0 0 6px;
+      font-size: 18px;
+      font-weight: 900;
+    }
+    .modal p{
+      margin: 0 0 12px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.8;
+    }
+    .formGrid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    @media (max-width: 560px){
+      .formGrid{ grid-template-columns: 1fr; }
+    }
+    .inp{
+      width:100%;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      outline:none;
+      font-family: inherit;
+      font-weight: 700;
+    }
+    .inp::placeholder{ color: rgba(156,163,175,.85); }
+    .modalFooter{
+      margin-top: 12px;
+      display:flex;
+      justify-content:flex-end;
+      gap: 10px;
+      align-items:center;
+    }
+
+    /* Small helpers */
+    .muted{ color: var(--muted); }
+    .hidden{ display:none !important; }
   </style>
 </head>
 
@@ -309,295 +518,890 @@
   <div class="wrap">
     <div class="topbar">
       <div class="brand">
-        <div>
-          <h1 class="title">آموزش‌های شرکت</h1>
-          <div class="subtitle">نسخه MVP — لیست + پخش + ترکینگ درصد</div>
+        <div class="brandRight">
+          <div class="logo" title="سیلانه سبز">
+            <img id="logoImg" alt="Seylaneh Sabz Logo" />
+          </div>
+          <div style="min-width:0;">
+            <h1 class="title">آکادمی سیلانه سبز</h1>
+            <div class="subtitle" id="tagline">یادگیری مستمر، مزیت رقابتی ما</div>
+          </div>
         </div>
-        <div class="pill" title="وضعیت سرویس">
-          <span class="dot"></span>
-          <span style="font-weight:800;color:var(--muted);font-size:13px;">Online</span>
-        </div>
+
+        <button id="btnChangeCategory" class="btnGhost hidden">تغییر دسته</button>
       </div>
 
-      <div class="controls">
-        <input id="q" class="search" placeholder="جستجو در آموزش‌ها (مثلاً: فروش، محصول، ...)" />
-        <div class="seg" role="tablist" aria-label="فیلتر نوع محتوا">
-          <button id="f_all" class="active" type="button">همه</button>
-          <button id="f_audio" type="button">پادکست</button>
-          <button id="f_video" type="button">ویدیو</button>
+      <!-- Controls only shown after category selection -->
+      <div id="controlsBlock" class="hidden">
+        <div class="controls">
+          <input id="q" class="search" placeholder="جستجو در آموزش‌ها (مثلاً: فروش، محصول، ...)" />
+          <div class="seg" role="tablist" aria-label="فیلتر نوع محتوا">
+            <button id="f_all" class="active" type="button">همه</button>
+            <button id="f_audio" type="button">پادکست</button>
+            <button id="f_video" type="button">ویدیو</button>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <div class="pill" id="catPill">—</div>
+          <select id="sortSel" class="select" aria-label="مرتب‌سازی">
+            <option value="smart">مرتب‌سازی هوشمند (پیش‌فرض)</option>
+            <option value="newest">جدیدترین محتوا</option>
+            <option value="liked">بیشترین لایک</option>
+            <option value="engaging">جذاب‌ترین محتوا</option>
+          </select>
         </div>
       </div>
     </div>
 
-    <div id="list" class="grid"></div>
+    <!-- Category gate -->
+    <div id="categoryGate">
+      <div class="row2">
+        <div class="card">
+          <div class="bigStat">
+            <div>
+              <h3>پیشرفت شما</h3>
+              <div class="value" id="overallProgress">0%</div>
+            </div>
+            <div class="tag">بر اساس تکمیل آموزش‌ها</div>
+          </div>
+          <div class="hint">برای شروع، یک دسته را انتخاب کنید. بعد می‌توانید هر زمان دسته را تغییر دهید.</div>
+        </div>
 
-    <div id="playerCard" class="card playerWrap">
-      <div class="playerHead">
-        <h3 id="nowTitle" class="playerTitle"></h3>
-        <div class="tag" id="nowPercent">0%</div>
+        <div class="card">
+          <div class="bigStat">
+            <div>
+              <h3>ادامه بده</h3>
+              <div class="value" id="continueTitle">—</div>
+            </div>
+            <button id="btnContinue" class="btnPrimary" disabled>پخش</button>
+          </div>
+          <div class="hint" id="continueHint">آخرین آموزشی که نیمه‌کاره مانده اینجا می‌آید.</div>
+        </div>
       </div>
-      <div id="playerArea"></div>
-      <div class="playerMeta" id="nowMeta"></div>
-      <div class="hint">هر ۱۰ ثانیه یک‌بار پیشرفت ذخیره می‌شود. اگر خارج شوید، دفعه بعد از همان‌جا ادامه می‌دهد.</div>
 
-      <div class="debug" id="debugBox"></div>
+      <div class="catGrid" id="catGrid"></div>
+    </div>
+
+    <!-- Content list -->
+    <div id="listArea" class="hidden">
+      <div class="row2">
+        <div class="card">
+          <div class="bigStat">
+            <div>
+              <h3>پیشرفت در این دسته</h3>
+              <div class="value" id="catProgress">0%</div>
+            </div>
+            <div class="tag" id="catProgressHint">—</div>
+          </div>
+          <div class="hint" id="microMotivation">هر قدم کوچک، یک عادت بزرگ می‌سازد.</div>
+        </div>
+
+        <div class="card">
+          <div class="bigStat">
+            <div>
+              <h3>نکته</h3>
+              <div class="value" style="font-size:16px; line-height:1.6; margin-top:8px;">
+                آموزش‌هایی که ناتمام هستند بالاتر نمایش داده می‌شوند.
+              </div>
+            </div>
+            <div class="tag">هوشمند</div>
+          </div>
+          <div class="hint">می‌توانید مرتب‌سازی را از بالا تغییر دهید.</div>
+        </div>
+      </div>
+
+      <div id="list" class="grid"></div>
+    </div>
+
+  </div>
+
+  <!-- Player modal (focus mode) -->
+  <div id="overlay" class="overlay" aria-hidden="true">
+    <div class="playerModal">
+      <div class="playerHead">
+        <div>
+          <h3 id="nowTitle" class="playerTitle"></h3>
+          <div class="meta" style="margin-top:8px;">
+            <span class="tag" id="nowType">—</span>
+            <span class="tag" id="nowDuration">—</span>
+            <span class="tag" id="nowRemaining">—</span>
+            <span class="tag" id="nowLikes">♡ 0</span>
+          </div>
+        </div>
+        <button id="btnClose" class="closeBtn">بستن</button>
+      </div>
+
+      <div id="playerArea"></div>
+
+      <div class="progressRow" style="margin-top: 14px;">
+        <div class="bar"><div id="nowBar"></div></div>
+        <div class="percent" id="nowPercent">0%</div>
+      </div>
+
+      <div class="motivate" id="motivateLine">اگر تا آخر بری، فردا راحت‌تری.</div>
+      <div class="hint">پیشرفت شما خودکار ذخیره می‌شود.</div>
     </div>
   </div>
 
-  <script>
-    // ====== Supabase (اطلاعات تو) ======
-    const SUPABASE_URL = "https://szjwrqzgiekjaggqsuoh.supabase.co";
-    const SUPABASE_ANON_KEY = "sb_publishable_hkKIc6r7pSDCJsUvoOafrg_vK8xQc0F";
+  <!-- Onboarding modal -->
+  <div id="onboardBackdrop" class="modalBackdrop" aria-hidden="true">
+    <div class="modal">
+      <h2>ثبت اطلاعات اولیه</h2>
+      <p>برای اینکه گزارش‌ها دقیق و اسم‌دار باشند، لطفاً این اطلاعات را یک‌بار وارد کنید.</p>
 
-    // ====== Debug mode: ?debug=1 ======
-    const DEBUG = new URLSearchParams(location.search).get("debug") === "1";
-    if (DEBUG) document.body.classList.add("debug");
+      <div class="formGrid">
+        <input id="inpName" class="inp" placeholder="نام و نام خانوادگی" />
+        <input id="inpRole" class="inp" placeholder="سمت شغلی" />
+        <input id="inpMobile" class="inp" placeholder="شماره موبایل (مثلاً 0912...)" inputmode="tel" />
+        <input id="inpDept" class="inp" placeholder="واحد (اختیاری)" />
+      </div>
 
-    // ====== Telegram detect + theme ======
-    const tg = window.Telegram?.WebApp;
-    if (tg) {
-      document.body.classList.add("tg");
-      try { tg.expand(); } catch(e){}
+      <div class="modalFooter">
+        <button id="btnSaveProfile" class="btnPrimary">ثبت و ورود</button>
+      </div>
+      <div class="hint" id="onboardErr" style="color:rgba(239,68,68,.95); display:none;"></div>
+    </div>
+  </div>
+
+<script>
+/* =========================
+   CONFIG (Supabase)
+========================= */
+const SUPABASE_URL = "https://szjwrqzgiekjaggqsuoh.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_hkKIc6r7pSDCJsUvoOafrg_vK8xQc0F";
+
+/* =========================
+   Logo (replace anytime)
+   - replace LOGO_DATA_URI with your real logo data-uri or a public URL.
+========================= */
+const LOGO_DATA_URI =
+  "data:image/svg+xml;utf8," +
+  encodeURIComponent(`
+  <svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
+    <defs>
+      <linearGradient id="g" x1="0" x2="1">
+        <stop offset="0" stop-color="#22c55e"/>
+        <stop offset="1" stop-color="#60a5fa"/>
+      </linearGradient>
+    </defs>
+    <rect x="0" y="0" width="96" height="96" rx="24" fill="rgba(255,255,255,.06)"/>
+    <circle cx="48" cy="48" r="28" fill="url(#g)" opacity="0.95"/>
+    <text x="48" y="56" text-anchor="middle" font-size="18" font-family="Arial" font-weight="700" fill="#071023">SS</text>
+  </svg>`);
+
+/* =========================
+   Telegram
+========================= */
+const tg = window.Telegram?.WebApp;
+if (tg) {
+  document.body.classList.add("tg");
+  try { tg.expand(); } catch(e){}
+}
+
+function getTelegramId() {
+  try {
+    const id = tg?.initDataUnsafe?.user?.id;
+    if (id) return String(id);
+  } catch(e){}
+  return "test_user_1";
+}
+const TELEGRAM_ID = getTelegramId();
+
+/* =========================
+   Helpers
+========================= */
+const $ = (id) => document.getElementById(id);
+
+function secondsToMin(sec) {
+  sec = Math.max(0, Math.floor(sec || 0));
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${m}:${String(s).padStart(2,'0')}`;
+}
+function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
+function calcPercent(pos, duration){
+  if (!duration || duration <= 0) return 0;
+  return clamp((pos / duration) * 100, 0, 100);
+}
+function show(el){ el.classList.remove("hidden"); }
+function hide(el){ el.classList.add("hidden"); }
+
+/* =========================
+   Supabase REST
+========================= */
+async function sGet(path) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    headers: {
+      "apikey": SUPABASE_ANON_KEY,
+      "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
     }
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
 
-    function getTelegramId() {
-      try {
-        const id = tg?.initDataUnsafe?.user?.id;
-        if (id) return String(id);
-      } catch(e){}
-      return "test_user_1"; // بیرون تلگرام برای تست
+async function sPost(path, body, merge=false) {
+  const headers = {
+    "apikey": SUPABASE_ANON_KEY,
+    "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+    "Content-Type": "application/json",
+  };
+  if (merge) headers["Prefer"] = "resolution=merge-duplicates";
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return true;
+}
+
+async function sDelete(path) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    method: "DELETE",
+    headers: {
+      "apikey": SUPABASE_ANON_KEY,
+      "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
     }
-    const TELEGRAM_ID = getTelegramId();
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return true;
+}
 
-    // ====== Helpers ======
-    const $ = (id) => document.getElementById(id);
+/* =========================
+   Categories (fixed)
+========================= */
+const CATEGORIES = [
+  { key: "sales",  title: "آموزش فروش",   desc: "مهارت‌های مذاکره، پیگیری، بستن فروش" },
+  { key: "product",title: "آموزش محصول", desc: "دانش محصول، مزایا، تفاوت‌ها و کاربردها" },
+  { key: "mindset",title: "نگرشی",       desc: "تفکر، انگیزه، مدیریت زمان، رشد فردی" },
+  { key: "campaign",title:"آموزش کمپین", desc: "کمپین‌سازی، اجرا، KPI و تحلیل" },
+  { key: "book",  title: "خلاصه کتاب",  desc: "چکیده‌های کاربردی برای تصمیم‌گیری بهتر" },
+];
 
-    async function supabaseGet(path) {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
-        headers: {
-          "apikey": SUPABASE_ANON_KEY,
-          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-        }
-      });
-      if (!res.ok) throw new Error(await res.text());
-      return res.json();
+function renderCategories(){
+  const grid = $("catGrid");
+  grid.innerHTML = "";
+  CATEGORIES.forEach(c => {
+    const div = document.createElement("div");
+    div.className = "catCard";
+    div.innerHTML = `<div class="catName">${c.title}</div><p class="catDesc">${c.desc}</p>`;
+    div.onclick = () => selectCategory(c.key);
+    grid.appendChild(div);
+  });
+}
+
+/* =========================
+   State
+========================= */
+let ALL_CONTENTS = [];
+let CURRENT_CATEGORY = null;
+let TYPE_FILTER = "all";     // all | audio | video
+let SORT_MODE = "smart";     // smart | newest | liked | engaging
+
+let userProfile = null;
+
+let progressByContent = new Map();     // content_id -> {last_position_seconds, completion_percent, updated_at, duration_seconds}
+let engagementByContent = new Map();   // content_id -> total active_seconds (all users)
+let likeCountByContent = new Map();    // content_id -> count
+let likedByMe = new Set();             // content_id
+
+let continueItem = null;
+
+/* =========================
+   UI init
+========================= */
+$("logoImg").src = LOGO_DATA_URI;
+
+/* =========================
+   Onboarding (one-time)
+========================= */
+async function loadUserProfile(){
+  // users?select=...&telegram_id=eq.X
+  const rows = await sGet(`users?select=telegram_id,full_name,job_title,mobile,department&telegram_id=eq.${encodeURIComponent(TELEGRAM_ID)}&limit=1`);
+  return rows[0] || null;
+}
+
+function showOnboarding(){
+  $("onboardErr").style.display = "none";
+  $("onboardBackdrop").classList.add("show");
+}
+
+function hideOnboarding(){
+  $("onboardBackdrop").classList.remove("show");
+}
+
+function validMobile(m){
+  const x = (m||"").trim();
+  // ساده و کافی برای MVP: 11 رقم و شروع با 0
+  if (!x) return false;
+  return /^0\d{10}$/.test(x);
+}
+
+$("btnSaveProfile").onclick = async () => {
+  const full_name = ($("inpName").value||"").trim();
+  const job_title  = ($("inpRole").value||"").trim();
+  const mobile     = ($("inpMobile").value||"").trim();
+  const department = ($("inpDept").value||"").trim();
+
+  if (!full_name || full_name.length < 3) return showErr("نام و نام خانوادگی را کامل وارد کنید.");
+  if (!job_title || job_title.length < 2) return showErr("سمت شغلی را وارد کنید.");
+  if (!validMobile(mobile)) return showErr("شماره موبایل معتبر نیست. مثل 0912xxxxxxx");
+
+  try{
+    await sPost("users", [{
+      telegram_id: TELEGRAM_ID,
+      full_name,
+      job_title,
+      mobile,
+      department: department || null,
+      updated_at: new Date().toISOString()
+    }], true);
+
+    userProfile = await loadUserProfile();
+    hideOnboarding();
+    // بعد از ثبت، UI را ریفرش می‌کنیم
+    await refreshAll();
+  }catch(e){
+    showErr("ثبت اطلاعات انجام نشد. تنظیمات Supabase را چک کنید.");
+    console.error(e);
+  }
+};
+
+function showErr(msg){
+  $("onboardErr").textContent = msg;
+  $("onboardErr").style.display = "block";
+}
+
+/* =========================
+   Progress / Likes / Engagement loaders
+========================= */
+async function loadMyProgress(){
+  const rows = await sGet(`progress?select=content_id,last_position_seconds,completion_percent,updated_at,duration_seconds&telegram_id=eq.${encodeURIComponent(TELEGRAM_ID)}&limit=5000`);
+  progressByContent = new Map();
+  rows.forEach(r => progressByContent.set(r.content_id, r));
+}
+
+async function loadEngagementAllUsers(contentIds){
+  // جذاب‌ترین محتوا: مجموع active_seconds همه کاربران روی هر محتوا
+  // برای MVP: تمام progress ها برای این محتواها را می‌گیریم و JS جمع می‌زند.
+  // اگر دیتات زیاد شد، بعداً با یک View/RPC بهینه می‌کنیم.
+  if (!contentIds.length) { engagementByContent = new Map(); return; }
+
+  const inList = contentIds.join(",");
+  const rows = await sGet(`progress?select=content_id,active_seconds&content_id=in.(${inList})&limit=10000`);
+  engagementByContent = new Map();
+  rows.forEach(r => {
+    const prev = engagementByContent.get(r.content_id) || 0;
+    engagementByContent.set(r.content_id, prev + (r.active_seconds || 0));
+  });
+}
+
+async function loadLikesForContents(contentIds){
+  if (!contentIds.length) {
+    likeCountByContent = new Map();
+    likedByMe = new Set();
+    return;
+  }
+  const inList = contentIds.join(",");
+  // همه لایک‌ها برای شمارش
+  const rowsAll = await sGet(`likes?select=content_id&content_id=in.(${inList})&limit=10000`);
+  likeCountByContent = new Map();
+  rowsAll.forEach(r => {
+    likeCountByContent.set(r.content_id, (likeCountByContent.get(r.content_id) || 0) + 1);
+  });
+  // لایک‌های خودم برای حالت liked
+  const rowsMe = await sGet(`likes?select=content_id&content_id=in.(${inList})&telegram_id=eq.${encodeURIComponent(TELEGRAM_ID)}&limit=5000`);
+  likedByMe = new Set(rowsMe.map(r => r.content_id));
+}
+
+async function toggleLike(contentId){
+  const isLiked = likedByMe.has(contentId);
+  try{
+    if (isLiked){
+      await sDelete(`likes?telegram_id=eq.${encodeURIComponent(TELEGRAM_ID)}&content_id=eq.${contentId}`);
+      likedByMe.delete(contentId);
+      likeCountByContent.set(contentId, Math.max(0, (likeCountByContent.get(contentId)||1) - 1));
+    } else {
+      await sPost("likes", [{ telegram_id: TELEGRAM_ID, content_id: contentId, created_at: new Date().toISOString() }], false);
+      likedByMe.add(contentId);
+      likeCountByContent.set(contentId, (likeCountByContent.get(contentId)||0) + 1);
     }
+  }catch(e){
+    console.error(e);
+  }
+}
 
-    async function supabasePost(path, body, preferMerge=false) {
-      const headers = {
-        "apikey": SUPABASE_ANON_KEY,
-        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-        "Content-Type": "application/json",
-      };
-      if (preferMerge) headers["Prefer"] = "resolution=merge-duplicates";
+/* =========================
+   Continue watching
+========================= */
+async function loadContinueWatching(){
+  const rows = await sGet(`progress?select=content_id,updated_at,last_position_seconds,completion_percent&telegram_id=eq.${encodeURIComponent(TELEGRAM_ID)}&order=updated_at.desc&limit=1`);
+  const p = rows[0];
+  if (!p) return null;
+  const c = ALL_CONTENTS.find(x => x.id === p.content_id);
+  if (!c) return null;
+  return { content: c, progress: p };
+}
 
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify(body),
-      });
-      if (!res.ok) throw new Error(await res.text());
-      return true;
+function updateContinueUI(){
+  if (!continueItem){
+    $("continueTitle").textContent = "—";
+    $("continueHint").textContent = "آخرین آموزشی که نیمه‌کاره مانده اینجا می‌آید.";
+    $("btnContinue").disabled = true;
+    return;
+  }
+  const {content, progress} = continueItem;
+  $("continueTitle").textContent = content.title.length > 18 ? content.title.slice(0,18) + "…" : content.title;
+  const remain = Math.max(0, (content.duration_seconds || 0) - (progress.last_position_seconds || 0));
+  $("continueHint").textContent = `باقی‌مانده: ${secondsToMin(remain)} • پیشرفت: ${Number(progress.completion_percent||0).toFixed(0)}%`;
+  $("btnContinue").disabled = false;
+  $("btnContinue").onclick = () => openPlayer(content);
+}
+
+/* =========================
+   Category selection
+========================= */
+function selectCategory(key){
+  CURRENT_CATEGORY = key;
+  hide($("categoryGate"));
+  show($("listArea"));
+  show($("controlsBlock"));
+  show($("btnChangeCategory"));
+
+  const catObj = CATEGORIES.find(x => x.key === key);
+  $("catPill").textContent = catObj ? `دسته: ${catObj.title}` : "—";
+
+  // micro copy
+  const lines = [
+    "یادگیری مستمر، مزیت رقابتی ماست.",
+    "هر قدم کوچک، یک عادت بزرگ می‌سازد.",
+    "ثبات در آموزش، ثبات در نتیجه می‌آورد.",
+  ];
+  $("microMotivation").textContent = lines[Math.floor(Math.random()*lines.length)];
+
+  applyFiltersAndRender();
+}
+
+$("btnChangeCategory").onclick = () => {
+  CURRENT_CATEGORY = null;
+  hide($("listArea"));
+  hide($("controlsBlock"));
+  hide($("btnChangeCategory"));
+  show($("categoryGate"));
+};
+
+/* =========================
+   Filters
+========================= */
+$("f_all").onclick = () => setType("all");
+$("f_audio").onclick = () => setType("audio");
+$("f_video").onclick = () => setType("video");
+$("q").addEventListener("input", () => applyFiltersAndRender());
+$("sortSel").addEventListener("change", () => { SORT_MODE = $("sortSel").value; applyFiltersAndRender(); });
+
+function setType(t){
+  TYPE_FILTER = t;
+  $("f_all").classList.toggle("active", t==="all");
+  $("f_audio").classList.toggle("active", t==="audio");
+  $("f_video").classList.toggle("active", t==="video");
+  applyFiltersAndRender();
+}
+
+/* =========================
+   Rendering list
+========================= */
+function contentTypeLabel(t){ return t === "audio" ? "پادکست" : "ویدیو"; }
+
+function getContentCategoryKey(c){
+  // محتوا باید ستون category_key داشته باشد. اگر نداره، "other"
+  // ما فقط 5 دسته داریم؛ هرچی غیر از این‌ها "other" می‌شود.
+  const k = (c.category_key || "").trim();
+  if (CATEGORIES.some(x => x.key === k)) return k;
+  return "other";
+}
+
+function applyFiltersAndRender(){
+  if (!CURRENT_CATEGORY) return;
+
+  const q = ($("q").value || "").trim().toLowerCase();
+
+  // 1) category filter
+  let items = ALL_CONTENTS.filter(c => {
+    const k = getContentCategoryKey(c);
+    return k === CURRENT_CATEGORY;
+  });
+
+  // اگر دسته انتخاب شد ولی چیزی نبود، یک پیام
+  if (!items.length){
+    $("list").innerHTML = `<div class="card empty">در این دسته هنوز محتوایی ثبت نشده.</div>`;
+    updateCategoryProgress(items);
+    return;
+  }
+
+  // 2) type filter
+  if (TYPE_FILTER !== "all"){
+    items = items.filter(x => x.type === TYPE_FILTER);
+  }
+
+  // 3) search
+  if (q){
+    items = items.filter(x => (x.title || "").toLowerCase().includes(q));
+  }
+
+  // 4) compute per-item derived: progress, likes, remaining, engagement
+  // 5) sort
+  items.sort((a,b) => compareItems(a,b));
+
+  renderItems(items);
+  updateCategoryProgress(items);
+}
+
+function compareItems(a,b){
+  const pa = progressByContent.get(a.id);
+  const pb = progressByContent.get(b.id);
+
+  const pctA = Number(pa?.completion_percent || 0);
+  const pctB = Number(pb?.completion_percent || 0);
+
+  const incompleteA = pctA < 99.9;
+  const incompleteB = pctB < 99.9;
+
+  const likesA = likeCountByContent.get(a.id) || 0;
+  const likesB = likeCountByContent.get(b.id) || 0;
+
+  const engA = engagementByContent.get(a.id) || 0;
+  const engB = engagementByContent.get(b.id) || 0;
+
+  const createdA = a.created_at ? new Date(a.created_at).getTime() : a.id;
+  const createdB = b.created_at ? new Date(b.created_at).getTime() : b.id;
+
+  // sort modes
+  if (SORT_MODE === "newest"){
+    return createdB - createdA;
+  }
+  if (SORT_MODE === "liked"){
+    return (likesB - likesA) || (createdB - createdA);
+  }
+  if (SORT_MODE === "engaging"){
+    return (engB - engA) || (createdB - createdA);
+  }
+
+  // smart default:
+  // 1) incomplete on top
+  if (incompleteA !== incompleteB) return incompleteA ? -1 : 1;
+  // 2) within incomplete: higher remaining? (actually we want closer to finish? let's do lower pct first? no, show closer to finish to complete)
+  if (incompleteA && incompleteB) {
+    // show higher pct first to encourage completion
+    if (pctA !== pctB) return pctB - pctA;
+  }
+  // 3) newest next
+  return createdB - createdA;
+}
+
+function renderItems(items){
+  const list = $("list");
+  list.innerHTML = "";
+
+  items.forEach(item => {
+    const p = progressByContent.get(item.id);
+    const pct = Number(p?.completion_percent || 0);
+    const lastPos = Number(p?.last_position_seconds || 0);
+    const duration = Number(item.duration_seconds || 0);
+    const remaining = Math.max(0, duration - lastPos);
+
+    const likeCount = likeCountByContent.get(item.id) || 0;
+    const isLiked = likedByMe.has(item.id);
+
+    const card = document.createElement("div");
+    card.className = "card";
+
+    card.innerHTML = `
+      <div class="itemHead">
+        <div style="flex:1; min-width:0;">
+          <div class="itemTitle">${item.title}</div>
+          <div class="meta">
+            <span class="tag">${contentTypeLabel(item.type)}</span>
+            <span class="tag">مدت ${secondsToMin(duration)}</span>
+            <span class="tag">باقی‌مانده ${secondsToMin(remaining)}</span>
+            <span class="tag">♡ ${likeCount}</span>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:10px; align-items:center;">
+          <button class="likeBtn ${isLiked ? "liked" : ""}" data-like="${item.id}" title="لایک">
+            ${isLiked ? "♥" : "♡"} <span>${likeCount}</span>
+          </button>
+          <button class="btnPrimary" data-play="${item.id}">پخش</button>
+        </div>
+      </div>
+
+      <div class="progressRow">
+        <div class="bar"><div style="width:${pct}%;"></div></div>
+        <div class="percent">${pct.toFixed(0)}%</div>
+      </div>
+    `;
+
+    // handlers
+    card.querySelector(`[data-play="${item.id}"]`).onclick = () => openPlayer(item);
+    card.querySelector(`[data-like="${item.id}"]`).onclick = async () => {
+      await toggleLike(item.id);
+      // update this card like UI immediately
+      applyFiltersAndRender();
+      // if player open on same content, update likes label
+      if (currentPlayerContent && currentPlayerContent.id === item.id){
+        $("nowLikes").textContent = `♡ ${likeCountByContent.get(item.id) || 0}`;
+      }
+    };
+
+    list.appendChild(card);
+  });
+}
+
+/* =========================
+   Progress summaries
+========================= */
+function updateCategoryProgress(itemsInView){
+  // پیشرفت در دسته: میانگین completion روی کل محتواهای دسته (حتی اگر فیلتر نوع فعال باشد)
+  // برای اینکه منصف باشد، روی کل محتواهای دسته حساب می‌کنیم نه فقط view.
+  const allInCat = ALL_CONTENTS.filter(c => getContentCategoryKey(c) === CURRENT_CATEGORY);
+  if (!allInCat.length){
+    $("catProgress").textContent = "0%";
+    $("catProgressHint").textContent = "—";
+    return;
+  }
+  let sum = 0;
+  allInCat.forEach(c => {
+    sum += Number(progressByContent.get(c.id)?.completion_percent || 0);
+  });
+  const avg = sum / allInCat.length;
+  $("catProgress").textContent = `${avg.toFixed(0)}%`;
+  $("catProgressHint").textContent = `${allInCat.length} آموزش در این دسته`;
+}
+
+function updateOverallProgress(){
+  if (!ALL_CONTENTS.length){
+    $("overallProgress").textContent = "0%";
+    return;
+  }
+  let sum = 0;
+  ALL_CONTENTS.forEach(c => sum += Number(progressByContent.get(c.id)?.completion_percent || 0));
+  const avg = sum / ALL_CONTENTS.length;
+  $("overallProgress").textContent = `${avg.toFixed(0)}%`;
+}
+
+/* =========================
+   Player (no download, no last point label)
+========================= */
+let currentPlayerContent = null;
+let progressTimer = null;
+
+$("btnClose").onclick = closePlayer;
+$("overlay").addEventListener("click", (e) => {
+  if (e.target === $("overlay")) closePlayer();
+});
+
+function setMotivationLine(pct){
+  const p = Math.floor(pct);
+  if (p >= 95) return "فقط چند ثانیه تا پایان! عالیه 👌";
+  if (p >= 70) return "تقریباً تمومش کردی. همین یک‌ذره رو ببند.";
+  if (p >= 30) return "خوبه. ادامه بده تا نکته‌های اصلی جمع بشه.";
+  return "شروع عالیه. فقط ۲ دقیقه دیگه ادامه بده.";
+}
+
+async function openPlayer(content){
+  currentPlayerContent = content;
+
+  // UI header
+  $("nowTitle").textContent = content.title;
+  $("nowType").textContent = contentTypeLabel(content.type);
+  $("nowDuration").textContent = `مدت ${secondsToMin(content.duration_seconds || 0)}`;
+
+  const likes = likeCountByContent.get(content.id) || 0;
+  $("nowLikes").textContent = `♡ ${likes}`;
+
+  // build media
+  const area = $("playerArea");
+  area.innerHTML = "";
+
+  const isVideo = content.type === "video";
+  const media = document.createElement(isVideo ? "video" : "audio");
+  media.controls = true;
+  media.src = content.file_path;
+
+  // disable download as much as possible
+  media.setAttribute("controlsList", "nodownload noplaybackrate");
+  media.setAttribute("disablePictureInPicture", "true");
+  media.oncontextmenu = () => false;
+  if (isVideo) media.playsInline = true;
+
+  area.appendChild(media);
+
+  // show modal
+  $("overlay").classList.add("show");
+  $("overlay").setAttribute("aria-hidden", "false");
+
+  // resume silently
+  const p = progressByContent.get(content.id);
+  const lastPos = Number(p?.last_position_seconds || 0);
+  const duration = Number(content.duration_seconds || 0);
+
+  function updateUI(currentTime){
+    const pos = Math.floor(currentTime || 0);
+    const pct = calcPercent(pos, duration);
+    $("nowPercent").textContent = `${pct.toFixed(0)}%`;
+    $("nowBar").style.width = `${pct}%`;
+
+    const remaining = Math.max(0, duration - pos);
+    $("nowRemaining").textContent = `باقی‌مانده ${secondsToMin(remaining)}`;
+    $("motivateLine").textContent = setMotivationLine(pct);
+  }
+
+  media.addEventListener("loadedmetadata", () => {
+    if (lastPos > 0 && lastPos < (media.duration || 999999)) {
+      media.currentTime = lastPos;
     }
+    updateUI(media.currentTime);
+  });
 
-    function secondsToMin(sec) {
-      sec = Math.max(0, Math.floor(sec || 0));
-      const m = Math.floor(sec / 60);
-      const s = sec % 60;
-      return `${m}:${String(s).padStart(2,'0')}`;
-    }
+  // track progress every 10 seconds + on pause/end
+  let lastSentAt = 0;
 
-    function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
-    function calcPercent(pos, duration) {
-      if (!duration || duration <= 0) return 0;
-      return clamp((pos / duration) * 100, 0, 100);
-    }
+  async function saveNow(force=false){
+    const pos = Math.floor(media.currentTime || 0);
+    const pct = calcPercent(pos, duration);
+    updateUI(media.currentTime);
 
-    // ====== Progress ======
-    async function loadProgress(contentId) {
-      const rows = await supabaseGet(
-        `progress?select=last_position_seconds,completion_percent,updated_at`
-        + `&telegram_id=eq.${encodeURIComponent(TELEGRAM_ID)}`
-        + `&content_id=eq.${contentId}`
-        + `&limit=1`
-      );
-      return rows[0] || null;
-    }
-
-    async function saveProgress(contentId, currentTime, durationSeconds) {
-      const pos = Math.floor(currentTime || 0);
-      const percent = calcPercent(pos, durationSeconds);
-
-      $("nowPercent").textContent = `${percent.toFixed(0)}%`;
-
-      await supabasePost("progress", {
+    // ذخیره
+    try{
+      await sPost("progress", [{
         telegram_id: TELEGRAM_ID,
-        content_id: contentId,
+        content_id: content.id,
         last_position_seconds: pos,
         max_position_seconds: pos,
-        duration_seconds: durationSeconds || 0,
-        completion_percent: Number(percent.toFixed(2)),
-        active_seconds: pos,
+        duration_seconds: duration || 0,
+        completion_percent: Number(pct.toFixed(2)),
+        active_seconds: pos, // MVP ساده (اگر خواستی دقیق‌تر کنیم، بعداً)
         updated_at: new Date().toISOString()
-      }, true);
-    }
+      }], true);
 
-    // ====== State ======
-    let ALL = [];
-    let FILTER = "all"; // all | audio | video
-
-    // ====== UI Render ======
-    function typeLabel(t){
-      return t === "audio" ? "پادکست" : "ویدیو";
-    }
-
-    function renderList(items){
-      const list = $("list");
-      list.innerHTML = "";
-
-      if (!items.length) {
-        list.innerHTML = `<div class="card empty">موردی پیدا نشد.</div>`;
-        return;
-      }
-
-      items.forEach(item => {
-        const card = document.createElement("div");
-        card.className = "card";
-
-        card.innerHTML = `
-          <div class="itemHead">
-            <div style="flex:1;">
-              <div class="itemTitle">${item.title}</div>
-              <div class="meta">
-                <span class="tag">${typeLabel(item.type)}</span>
-                <span class="tag">مدت ${secondsToMin(item.duration_seconds)}</span>
-              </div>
-            </div>
-            <button class="btnPrimary">پخش</button>
-          </div>
-
-          <div class="progressRow">
-            <div class="bar"><div id="bar_${item.id}"></div></div>
-            <div class="percent" id="pct_${item.id}">—</div>
-          </div>
-        `;
-
-        card.querySelector("button").onclick = () => openPlayer(item);
-
-        list.appendChild(card);
-
-        // پر کردن درصد قبلی روی کارت (اگر وجود داشته باشد)
-        loadProgress(item.id).then(p => {
-          const pct = p?.completion_percent ?? null;
-          const w = pct == null ? 0 : pct;
-          const pctEl = document.getElementById(`pct_${item.id}`);
-          const barEl = document.getElementById(`bar_${item.id}`);
-          if (pctEl && barEl){
-            pctEl.textContent = pct == null ? "0%" : `${Number(pct).toFixed(0)}%`;
-            barEl.style.width = `${w}%`;
-          }
-        }).catch(()=>{});
+      // cache update
+      progressByContent.set(content.id, {
+        content_id: content.id,
+        last_position_seconds: pos,
+        completion_percent: Number(pct.toFixed(2)),
+        updated_at: new Date().toISOString(),
+        duration_seconds: duration || 0
       });
+      updateOverallProgress();
+    }catch(e){
+      console.error(e);
     }
+  }
 
-    function applyFilters(){
-      const q = ($("q").value || "").trim().toLowerCase();
-      let items = [...ALL];
-
-      if (FILTER !== "all") items = items.filter(x => x.type === FILTER);
-      if (q) items = items.filter(x => (x.title || "").toLowerCase().includes(q));
-
-      renderList(items);
+  media.addEventListener("timeupdate", () => {
+    updateUI(media.currentTime);
+    if (Math.abs(media.currentTime - lastSentAt) >= 10) {
+      lastSentAt = media.currentTime;
+      saveNow(false);
     }
+  });
 
-    // ====== Player ======
-    async function openPlayer(item){
-      $("playerCard").style.display = "block";
-      $("nowTitle").textContent = item.title;
+  media.addEventListener("pause", () => saveNow(true));
+  media.addEventListener("ended", () => {
+    media.currentTime = duration || media.duration || 0;
+    saveNow(true);
+  });
 
-      let prev = null;
-      try { prev = await loadProgress(item.id); } catch(e){ prev = null; }
+  // initial UI
+  updateUI(lastPos);
 
-      const lastPos = prev?.last_position_seconds || 0;
-      const prevPct = prev?.completion_percent || 0;
+  // subtle: stop any previous timer
+  if (progressTimer) clearInterval(progressTimer);
+}
 
-      $("nowPercent").textContent = `${Number(prevPct).toFixed(0)}%`;
-      $("nowMeta").innerHTML = `
-        <span class="tag">${typeLabel(item.type)}</span>
-        <span class="tag">مدت ${secondsToMin(item.duration_seconds)}</span>
-        <span class="tag">آخرین نقطه ${secondsToMin(lastPos)}</span>
-      `;
+function closePlayer(){
+  $("overlay").classList.remove("show");
+  $("overlay").setAttribute("aria-hidden", "true");
+  currentPlayerContent = null;
+  if (progressTimer) clearInterval(progressTimer);
+  progressTimer = null;
+  // refresh list UI (percent updates)
+  if (CURRENT_CATEGORY) applyFiltersAndRender();
+}
 
-      // Debug info (only if ?debug=1)
-      $("debugBox").textContent = DEBUG
-        ? `telegram_id: ${TELEGRAM_ID}\ncontent_id: ${item.id}\nfile: ${item.file_path}\nlast_saved: ${secondsToMin(lastPos)}`
-        : "";
+/* =========================
+   Refresh All
+========================= */
+async function refreshAll(){
+  // 1) Ensure user profile exists
+  userProfile = await loadUserProfile();
+  if (!userProfile){
+    showOnboarding();
+    return;
+  }
 
-      const area = $("playerArea");
-      area.innerHTML = "";
+  // 2) load contents
+  // IMPORTANT: contents table needs columns: category_key, created_at
+  // If created_at is missing, we fallback to id sorting.
+  ALL_CONTENTS = await sGet("contents?select=id,title,type,duration_seconds,file_path,category_key,created_at&order=id.desc&limit=5000");
 
-      const isVideo = item.type === "video";
-      const media = document.createElement(isVideo ? "video" : "audio");
-      media.controls = true;
-      media.src = item.file_path;
-      if (isVideo) media.playsInline = true;
+  // 3) load my progress
+  await loadMyProgress();
 
-      media.addEventListener("loadedmetadata", () => {
-        // Resume
-        if (lastPos > 0 && lastPos < (media.duration || 999999)) {
-          media.currentTime = lastPos;
-        }
-      });
+  // 4) continue watching
+  continueItem = await loadContinueWatching();
+  updateContinueUI();
 
-      let lastSentAt = 0;
+  // 5) overall progress
+  updateOverallProgress();
 
-      media.addEventListener("timeupdate", () => {
-        const p = calcPercent(Math.floor(media.currentTime), item.duration_seconds);
-        $("nowPercent").textContent = `${p.toFixed(0)}%`;
+  // 6) categories UI
+  renderCategories();
 
-        if (Math.abs(media.currentTime - lastSentAt) >= 10) {
-          lastSentAt = media.currentTime;
-          saveProgress(item.id, media.currentTime, item.duration_seconds).catch(()=>{});
-        }
-      });
+  // 7) precompute likes + engagement for current category when chosen
+  // (we compute on demand inside selectCategory)
+}
 
-      media.addEventListener("pause", () => {
-        saveProgress(item.id, media.currentTime, item.duration_seconds).catch(()=>{});
-      });
+/* =========================
+   Start
+========================= */
+(async () => {
+  try{
+    await refreshAll();
 
-      media.addEventListener("ended", () => {
-        saveProgress(item.id, item.duration_seconds || media.duration || 0, item.duration_seconds).catch(()=>{});
-      });
+    // attach after category selection:
+    // whenever category changes, reload likes+engagement for that category contents
+    const _selectCategory = selectCategory;
+    selectCategory = async (key) => {
+      CURRENT_CATEGORY = key;
 
-      area.appendChild(media);
+      // for this category, get ids
+      const ids = ALL_CONTENTS
+        .filter(c => getContentCategoryKey(c) === key)
+        .map(c => c.id);
 
-      // اسکرول نرم به پلیر
-      window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
-    }
+      // load likes + engagement for these ids (for sorting)
+      try{
+        await loadLikesForContents(ids);
+      }catch(e){ console.error(e); likeCountByContent = new Map(); likedByMe = new Set(); }
 
-    // ====== Init ======
-    (async () => {
-      try {
-        ALL = await supabaseGet("contents?select=id,title,type,file_path,duration_seconds&order=id.desc");
-        applyFilters();
-      } catch (e) {
-        $("list").innerHTML = `<div class="card empty">خطا در دریافت لیست محتوا<br><div style="margin-top:8px;color:var(--muted);font-size:12px;white-space:pre-wrap;">${e.message}</div></div>`;
-      }
-    })();
+      try{
+        await loadEngagementAllUsers(ids);
+      }catch(e){ console.error(e); engagementByContent = new Map(); }
 
-    // ====== Controls ======
-    $("q").addEventListener("input", () => applyFilters());
+      // now call original select
+      _selectCategory(key);
+    };
 
-    function setFilter(f){
-      FILTER = f;
-      $("f_all").classList.toggle("active", f==="all");
-      $("f_audio").classList.toggle("active", f==="audio");
-      $("f_video").classList.toggle("active", f==="video");
-      applyFilters();
-    }
-    $("f_all").onclick = () => setFilter("all");
-    $("f_audio").onclick = () => setFilter("audio");
-    $("f_video").onclick = () => setFilter("video");
-  </script>
+  }catch(e){
+    console.error(e);
+    // minimal fail UI
+    $("catGrid").innerHTML = `<div class="card empty">خطا در بارگذاری. تنظیمات Supabase یا جدول‌ها را بررسی کنید.</div>`;
+  }
+})();
+</script>
 </body>
 </html>
+
