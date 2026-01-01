@@ -1,4 +1,4 @@
-<!doctype html><!doctype html>
+<!doctype html>
 <html lang="fa" dir="rtl">
 <head>
   <meta charset="utf-8" />
@@ -823,8 +823,27 @@ async function loadUserProfile(){
   return rows[0] || null;
 }
 
-function showOnboarding(){
+function showOnboarding(existing){
   $("onboardErr").style.display = "none";
+
+  // IMPORTANT: این ۳ مورد باید حتماً دستی توسط کاربر وارد شود:
+  // full_name, job_title, mobile
+  // بنابراین هیچ پیش‌پرکردنی از تلگرام برای این فیلدها انجام نمی‌دهیم.
+
+  // اگر کاربر از قبل رکورد داشت، فقط همان مقادیر قبلی خودش را نشان بده تا بتواند تکمیل/اصلاح کند
+  if (existing){
+    $("inpName").value   = (existing.full_name || "").trim();
+    $("inpRole").value   = (existing.job_title || "").trim();
+    $("inpMobile").value = (existing.mobile || "").trim();
+    $("inpDept").value   = (existing.department || "").trim();
+  } else {
+    // کاربر جدید: همه فیلدها خالی باشد تا خودش وارد کند
+    $("inpName").value = "";
+    $("inpRole").value = "";
+    $("inpMobile").value = "";
+    $("inpDept").value = "";
+  }
+
   $("onboardBackdrop").classList.add("show");
 }
 
@@ -837,6 +856,17 @@ function validMobile(m){
   // ساده و کافی برای MVP: 11 رقم و شروع با 0
   if (!x) return false;
   return /^0\d{10}$/.test(x);
+}
+
+function isProfileComplete(p){
+  if (!p) return false;
+  const full = (p.full_name||"").trim();
+  const role = (p.job_title||"").trim();
+  const mob  = (p.mobile||"").trim();
+  if (full.length < 3) return false;
+  if (role.length < 2) return false;
+  if (!validMobile(mob)) return false;
+  return true;
 }
 
 $("btnSaveProfile").onclick = async () => {
@@ -1335,10 +1365,10 @@ function closePlayer(){
    Refresh All
 ========================= */
 async function refreshAll(){
-  // 1) Ensure user profile exists
+  // 1) Ensure user profile exists + is complete
   userProfile = await loadUserProfile();
-  if (!userProfile){
-    showOnboarding();
+  if (!userProfile || !isProfileComplete(userProfile)){
+    showOnboarding(userProfile);
     return;
   }
 
@@ -1404,4 +1434,3 @@ async function refreshAll(){
 </script>
 </body>
 </html>
-
