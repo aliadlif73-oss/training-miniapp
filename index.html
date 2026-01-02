@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>آکادمی سیلانه سبز</title>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
+  
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap" rel="stylesheet">
 
@@ -315,6 +317,7 @@
       text-align:left;
     }
 
+    /* Category gate */
     .catGrid{
       margin-top: 14px;
       display:grid;
@@ -345,6 +348,35 @@
       line-height: 1.6;
     }
 
+    /* Continue watching + summary */
+    .row2{
+      margin-top: 12px;
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 860px){
+      .row2{ grid-template-columns: 1fr; }
+    }
+    .bigStat{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 10px;
+    }
+    .bigStat h3{
+      margin:0;
+      font-size: 14px;
+      font-weight: 900;
+      color: var(--muted);
+    }
+    .bigStat .value{
+      margin-top: 8px;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: -0.3px;
+    }
+
     .hint{
       margin-top: 10px;
       color: var(--muted);
@@ -359,6 +391,7 @@
       color: var(--muted);
     }
 
+    /* Player modal (focus mode) */
     .overlay{
       position: fixed;
       inset: 0;
@@ -418,6 +451,7 @@
       line-height: 1.7;
     }
 
+    /* Onboarding modal */
     .modalBackdrop{
       position: fixed;
       inset: 0;
@@ -476,6 +510,7 @@
       align-items:center;
     }
 
+    /* Small helpers */
     .muted{ color: var(--muted); }
     .hidden{ display:none !important; }
   </style>
@@ -498,6 +533,7 @@
         <button id="btnChangeCategory" class="btnGhost hidden">تغییر دسته</button>
       </div>
 
+      <!-- Controls only shown after category selection -->
       <div id="controlsBlock" class="hidden">
         <div class="controls">
           <input id="q" class="search" placeholder="جستجو در آموزش‌ها (مثلاً: فروش، محصول، ...)" />
@@ -520,7 +556,9 @@
       </div>
     </div>
 
+    <!-- Category gate -->
     <div id="categoryGate">
+
       <div style="display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap; margin-top:12px;">
         <div class="pill" style="border-radius:999px;">
           پیشرفت شما:
@@ -535,10 +573,22 @@
         <div id="continueHint" class="hint" style="margin:0; flex-basis:100%; display:none;"></div>
       </div>
 
+<button id="btnContinue" class="btnGhost" style="border-radius:999px;" disabled>
+            ادامه:
+            <span id="continueTitle" style="font-weight:900; margin-right:6px;">—</span>
+          </button>
+        </div>
+        <div class="hint" id="continueHint" style="margin-top:8px;">برای شروع، یک دسته را انتخاب کنید. بعد می‌توانید هر زمان دسته را تغییر دهید.</div>
+      </div>
+
+
       <div class="catGrid" id="catGrid"></div>
     </div>
 
+    <!-- Content list -->
     <div id="listArea" class="hidden">
+      
+      
       <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:12px;">
         <div class="pill">
           پیشرفت این دسته:
@@ -552,21 +602,23 @@
         </div>
       </div>
 
+
       <div id="list" class="grid"></div>
     </div>
 
   </div>
 
+  <!-- Player modal (focus mode) -->
   <div id="overlay" class="overlay" aria-hidden="true">
     <div class="playerModal">
       <div class="playerHead">
         <div>
-          <h3 class="playerTitle" id="nowTitle">—</h3>
-          <div class="meta" style="margin-top:6px;">
+          <h3 id="nowTitle" class="playerTitle"></h3>
+          <div class="meta" style="margin-top:8px;">
             <span class="tag" id="nowType">—</span>
             <span class="tag" id="nowDuration">—</span>
             <span class="tag" id="nowRemaining">—</span>
-            <span class="tag" id="nowLikes">—</span>
+            <span class="tag" id="nowLikes">♡ 0</span>
           </div>
         </div>
         <button id="btnClose" class="closeBtn">بستن</button>
@@ -574,19 +626,21 @@
 
       <div id="playerArea"></div>
 
-      <div class="progressRow">
+      <div class="progressRow" style="margin-top: 14px;">
         <div class="bar"><div id="nowBar"></div></div>
         <div class="percent" id="nowPercent">0%</div>
       </div>
 
-      <div class="motivate" id="motivateLine">یادگیری امروز، سرمایه فرداست.</div>
+      <div class="motivate" id="motivateLine">اگر تا آخر بری، فردا راحت‌تری.</div>
+      <div class="hint">پیشرفت شما خودکار ذخیره می‌شود.</div>
     </div>
   </div>
 
-  <div id="onboardBackdrop" class="modalBackdrop">
+  <!-- Onboarding modal -->
+  <div id="onboardBackdrop" class="modalBackdrop" aria-hidden="true">
     <div class="modal">
-      <h2>تکمیل اطلاعات</h2>
-      <p>برای ورود به آکادمی، لطفاً اطلاعات را یک‌بار وارد کنید.</p>
+      <h2>ثبت اطلاعات اولیه</h2>
+      <p>برای اینکه گزارش‌ها دقیق و اسم‌دار باشند، لطفاً این اطلاعات را یک‌بار وارد کنید.</p>
 
       <div class="formGrid">
         <input id="inpName" class="inp" placeholder="نام و نام خانوادگی" />
@@ -606,17 +660,12 @@
 /* =========================
    CONFIG (Supabase)
 ========================= */
-// >>> FILL THESE <<<
-// Example:
-// const SB_URL = "https://xxxx.supabase.co";
-// const SB_ANON_KEY = "eyJhbGciOi...";
-// IMPORTANT: use anon key (publishable), NOT service_role.
-
-const SB_URL = "https://szjwrqzgiekjaggqsuoh.supabase.co";
-const SB_ANON_KEY = "sb_publishable_hkKIc6r7pSDCJsUvoOafrg_vK8xQc0F";
+const SUPABASE_URL = "https://szjwrqzgiekjaggqsuoh.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_hkKIc6r7pSDCJsUvoOafrg_vK8xQc0F";
 
 /* =========================
    Logo (replace anytime)
+   - replace LOGO_DATA_URI with your real logo data-uri or a public URL.
 ========================= */
 const LOGO_DATA_URI =
   "data:image/svg+xml;utf8," +
@@ -635,108 +684,134 @@ const LOGO_DATA_URI =
     <path d="M41 57c6-6 12-10 19-12" stroke="rgba(7,16,35,.85)" stroke-width="3" stroke-linecap="round"/>
   </svg>`);
 
+
 /* =========================
    Telegram
 ========================= */
 const tg = window.Telegram?.WebApp;
+
+function resolveUserId() {
+  // Preferred: real Telegram user id inside Telegram Mini App
+  try {
+    if (tg) {
+      tg.ready();
+      const id = tg.initDataUnsafe?.user?.id;
+      if (id) return String(id);
+    }
+  } catch (e) {}
+
+  // Fallbacks for web-preview/testing (so UI still renders)
+  const qs = new URLSearchParams(location.search);
+  const qid = qs.get("uid");
+  if (qid) return String(qid);
+
+  const saved = localStorage.getItem("dev_uid");
+  if (saved) return saved;
+
+  // Last resort: stable anonymous id for preview
+  return "web_preview";
+}
+
+const TELEGRAM_ID = resolveUserId();
+
 if (tg) {
   document.body.classList.add("tg");
   try { tg.expand(); } catch(e){}
 }
 
-function getTelegramId() {
-  try {
-    const u = tg?.initDataUnsafe?.user;
-    return u?.id || null;
-  } catch(e) {
-    return null;
-  }
-}
-
-const TELEGRAM_ID = getTelegramId();
 
 /* =========================
-   Utilities
+   Helpers
 ========================= */
-function $(id){ return document.getElementById(id); }
+const $ = (id) => document.getElementById(id);
 
-function showErr(msg){
-  $("onboardErr").textContent = msg;
-  $("onboardErr").style.display = "block";
+function secondsToMin(sec) {
+  sec = Math.max(0, Math.floor(sec || 0));
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${m}:${String(s).padStart(2,'0')}`;
 }
-
-function hideErr(){
-  $("onboardErr").style.display = "none";
+function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
+function calcPercent(pos, duration){
+  if (!duration || duration <= 0) return 0;
+  return clamp((pos / duration) * 100, 0, 100);
 }
-
-function fmtTime(sec){
-  sec = Math.max(0, Math.floor(sec||0));
-  const m = Math.floor(sec/60);
-  const s = sec%60;
-  return `${m}:${String(s).padStart(2,"0")}`;
-}
-
-function safeText(x){
-  if (x == null) return "";
-  return String(x);
-}
+function show(el){ el.classList.remove("hidden"); }
+function hide(el){ el.classList.add("hidden"); }
 
 /* =========================
-   Simple Supabase REST client
+   Supabase REST
 ========================= */
-async function sFetch(path, opts={}){
-  const url = `${SB_URL}/rest/v1/${path}`;
-  const headers = Object.assign({
-    apikey: SB_ANON_KEY,
-    Authorization: `Bearer ${SB_ANON_KEY}`,
-    "Content-Type": "application/json",
-    "Prefer": "return=representation"
-  }, (opts.headers||{}));
-
-  const res = await fetch(url, Object.assign({}, opts, { headers }));
-  if (!res.ok) {
-    let t = "";
-    try{ t = await res.text(); }catch(e){}
-    throw new Error(`Supabase error ${res.status}: ${t || res.statusText}`);
-  }
-  if (res.status === 204) return null;
-  return await res.json();
-}
-
-async function sGet(path){
-  return await sFetch(path, { method: "GET" });
-}
-
-async function sPost(table, rows, upsert=false){
-  return await sFetch(table, {
-    method: "POST",
+async function sGet(path) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
     headers: {
-      "Prefer": upsert ? "resolution=merge-duplicates,return=representation" : "return=representation"
-    },
-    body: JSON.stringify(rows)
+      "apikey": SUPABASE_ANON_KEY,
+      "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+    }
   });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
 }
 
-async function sPatch(path, body){
-  return await sFetch(path, { method: "PATCH", body: JSON.stringify(body) });
+async function sPost(path, body, merge=false) {
+  const headers = {
+    "apikey": SUPABASE_ANON_KEY,
+    "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+    "Content-Type": "application/json",
+  };
+  if (merge) headers["Prefer"] = "resolution=merge-duplicates";
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return true;
+}
+
+async function sDelete(path) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    method: "DELETE",
+    headers: {
+      "apikey": SUPABASE_ANON_KEY,
+      "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+    }
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return true;
+}
+
+/* =========================
+   Categories (fixed)
+========================= */
+const CATEGORIES = [
+  { key: "sales",  title: "آموزش فروش",   desc: "مهارت‌های مذاکره، پیگیری، بستن فروش" },
+  { key: "product",title: "آموزش محصول", desc: "دانش محصول، مزایا، تفاوت‌ها و کاربردها" },
+  { key: "mindset",title: "نگرشی",       desc: "تفکر، انگیزه، مدیریت زمان، رشد فردی" },
+  { key: "campaign",title:"آموزش کمپین", desc: "کمپین‌سازی، اجرا، KPI و تحلیل" },
+  { key: "book",  title: "خلاصه کتاب",  desc: "چکیده‌های کاربردی برای تصمیم‌گیری بهتر" },
+];
+
+function renderCategories(){
+  const grid = $("catGrid");
+  grid.innerHTML = "";
+  CATEGORIES.forEach(c => {
+    const div = document.createElement("div");
+    div.className = "catCard";
+    div.innerHTML = `<div class="catName">${c.title}</div><p class="catDesc">${c.desc}</p>`;
+    div.onclick = () => selectCategory(c.key);
+    grid.appendChild(div);
+  });
 }
 
 /* =========================
    State
 ========================= */
-const CATEGORY_MAP = [
-  { key:"sales",    name:"فروش",          desc:"فروش و مذاکره B2B" },
-  { key:"product",  name:"محصول",         desc:"شناخت محصول و مزیت‌ها" },
-  { key:"mindset",  name:"نگرشی",         desc:"نگرش، رشد و فرهنگ سازمانی" },
-  { key:"campaign", name:"کمپین",         desc:"کمپین‌سازی و اجرا" },
-  { key:"book",     name:"معرفی کتاب",    desc:"خلاصه کتاب‌های کاربردی" },
-];
-
-let CURRENT_CATEGORY = null;
-let FILTER_TYPE = "all"; // all|audio|video
-let SORT_MODE = "smart"; // smart|newest|liked|engaging
-
 let ALL_CONTENTS = [];
+let CURRENT_CATEGORY = null;
+let TYPE_FILTER = "all";     // all | audio | video
+let SORT_MODE = "smart";     // smart | newest | liked | engaging
+
 let userProfile = null;
 
 let progressByContent = new Map();     // content_id -> {last_position_seconds, completion_percent, updated_at, duration_seconds}
@@ -755,6 +830,7 @@ $("logoImg").src = LOGO_DATA_URI;
    Onboarding (one-time)
 ========================= */
 async function loadUserProfile(){
+  // users?select=...&telegram_id=eq.X
   const rows = await sGet(`users?select=telegram_id,full_name,job_title,mobile,department&telegram_id=eq.${encodeURIComponent(TELEGRAM_ID)}&limit=1`);
   return rows[0] || null;
 }
@@ -777,8 +853,9 @@ function hideOnboarding(){
   $("onboardBackdrop").classList.remove("show");
 }
 
-function validMobile(x){
-  x = (x||"").trim();
+function validMobile(m){
+  const x = (m||"").trim();
+  // ساده و کافی برای MVP: 11 رقم و شروع با 0
   if (!x) return false;
   return /^0\d{10}$/.test(x);
 }
@@ -805,6 +882,7 @@ $("btnSaveProfile").onclick = async () => {
 
     userProfile = await loadUserProfile();
     hideOnboarding();
+    // بعد از ثبت، UI را ریفرش می‌کنیم
     await refreshAll();
   }catch(e){
     showErr("ثبت اطلاعات انجام نشد. تنظیمات Supabase را چک کنید.");
@@ -812,98 +890,302 @@ $("btnSaveProfile").onclick = async () => {
   }
 };
 
+function showErr(msg){
+  $("onboardErr").textContent = msg;
+  $("onboardErr").style.display = "block";
+}
+
 /* =========================
-   Category UI
+   Progress / Likes / Engagement loaders
 ========================= */
-function renderCategories(){
-  const el = $("catGrid");
-  el.innerHTML = "";
-  CATEGORY_MAP.forEach(c => {
-    const d = document.createElement("div");
-    d.className = "catCard";
-    d.innerHTML = `
-      <div class="catName">${c.name}</div>
-      <p class="catDesc">${c.desc}</p>
-    `;
-    d.onclick = () => selectCategory(c.key);
-    el.appendChild(d);
+async function loadMyProgress(){
+  const rows = await sGet(`progress?select=content_id,last_position_seconds,completion_percent,updated_at,duration_seconds&telegram_id=eq.${encodeURIComponent(TELEGRAM_ID)}&limit=5000`);
+  progressByContent = new Map();
+  rows.forEach(r => progressByContent.set(r.content_id, r));
+}
+
+async function loadEngagementAllUsers(contentIds){
+  // جذاب‌ترین محتوا: مجموع active_seconds همه کاربران روی هر محتوا
+  // برای MVP: تمام progress ها برای این محتواها را می‌گیریم و JS جمع می‌زند.
+  // اگر دیتات زیاد شد، بعداً با یک View/RPC بهینه می‌کنیم.
+  if (!contentIds.length) { engagementByContent = new Map(); return; }
+
+  const inList = contentIds.join(",");
+  const rows = await sGet(`progress?select=content_id,active_seconds&content_id=in.(${inList})&limit=10000`);
+  engagementByContent = new Map();
+  rows.forEach(r => {
+    const prev = engagementByContent.get(r.content_id) || 0;
+    engagementByContent.set(r.content_id, prev + (r.active_seconds || 0));
   });
 }
 
-function setControlsVisible(v){
-  $("controlsBlock").classList.toggle("hidden", !v);
-  $("btnChangeCategory").classList.toggle("hidden", !v);
+async function loadLikesForContents(contentIds){
+  if (!contentIds.length) {
+    likeCountByContent = new Map();
+    likedByMe = new Set();
+    return;
+  }
+  const inList = contentIds.join(",");
+  // همه لایک‌ها برای شمارش
+  const rowsAll = await sGet(`likes?select=content_id&content_id=in.(${inList})&limit=10000`);
+  likeCountByContent = new Map();
+  rowsAll.forEach(r => {
+    likeCountByContent.set(r.content_id, (likeCountByContent.get(r.content_id) || 0) + 1);
+  });
+  // لایک‌های خودم برای حالت liked
+  const rowsMe = await sGet(`likes?select=content_id&content_id=in.(${inList})&telegram_id=eq.${encodeURIComponent(TELEGRAM_ID)}&limit=5000`);
+  likedByMe = new Set(rowsMe.map(r => r.content_id));
+}
+
+async function toggleLike(contentId){
+  const isLiked = likedByMe.has(contentId);
+  try{
+    if (isLiked){
+      await sDelete(`likes?telegram_id=eq.${encodeURIComponent(TELEGRAM_ID)}&content_id=eq.${contentId}`);
+      likedByMe.delete(contentId);
+      likeCountByContent.set(contentId, Math.max(0, (likeCountByContent.get(contentId)||1) - 1));
+    } else {
+      await sPost("likes", [{ telegram_id: TELEGRAM_ID, content_id: contentId, created_at: new Date().toISOString() }], false);
+      likedByMe.add(contentId);
+      likeCountByContent.set(contentId, (likeCountByContent.get(contentId)||0) + 1);
+    }
+  }catch(e){
+    console.error(e);
+  }
+}
+
+/* =========================
+   Continue watching
+========================= */
+async function loadContinueWatching(){
+  const rows = await sGet(`progress?select=content_id,updated_at,last_position_seconds,completion_percent&telegram_id=eq.${encodeURIComponent(TELEGRAM_ID)}&order=updated_at.desc&limit=1`);
+  const p = rows[0];
+  if (!p) return null;
+  const c = ALL_CONTENTS.find(x => x.id === p.content_id);
+  if (!c) return null;
+  return { content: c, progress: p };
+}
+
+function updateContinueUI(){
+  if (!continueItem){
+    $("continueTitle").textContent = "—";
+    $("continueHint").textContent = "آخرین آموزشی که نیمه‌کاره مانده اینجا می‌آید.";
+    $("btnContinue").disabled = true;
+    return;
+  }
+  const {content, progress} = continueItem;
+  $("continueTitle").textContent = content.title.length > 18 ? content.title.slice(0,18) + "…" : content.title;
+  const remain = Math.max(0, (content.duration_seconds || 0) - (progress.last_position_seconds || 0));
+  $("continueHint").textContent = `باقی‌مانده: ${secondsToMin(remain)} • پیشرفت: ${Number(progress.completion_percent||0).toFixed(0)}%`;
+  $("btnContinue").disabled = false;
+  $("btnContinue").onclick = () => openPlayer(content);
+}
+
+/* =========================
+   Category selection
+========================= */
+function selectCategory(key){
+  CURRENT_CATEGORY = key;
+  hide($("categoryGate"));
+  show($("listArea"));
+  show($("controlsBlock"));
+  show($("btnChangeCategory"));
+
+  const catObj = CATEGORIES.find(x => x.key === key);
+  $("catPill").textContent = catObj ? `دسته: ${catObj.title}` : "—";
+
+  // micro copy
+  const lines = [
+    "یادگیری مستمر، مزیت رقابتی ماست.",
+    "هر قدم کوچک، یک عادت بزرگ می‌سازد.",
+    "ثبات در آموزش، ثبات در نتیجه می‌آورد.",
+  ];
+  $("microMotivation").textContent = lines[Math.floor(Math.random()*lines.length)];
+
+  applyFiltersAndRender();
 }
 
 $("btnChangeCategory").onclick = () => {
   CURRENT_CATEGORY = null;
-  $("categoryGate").classList.remove("hidden");
-  $("listArea").classList.add("hidden");
-  setControlsVisible(false);
+  hide($("listArea"));
+  hide($("controlsBlock"));
+  hide($("btnChangeCategory"));
+  show($("categoryGate"));
 };
 
 /* =========================
    Filters
 ========================= */
-function setFilter(type){
-  FILTER_TYPE = type;
-  ["f_all","f_audio","f_video"].forEach(id => $(id).classList.remove("active"));
-  if (type === "all") $("f_all").classList.add("active");
-  if (type === "audio") $("f_audio").classList.add("active");
-  if (type === "video") $("f_video").classList.add("active");
-  renderList();
+$("f_all").onclick = () => setType("all");
+$("f_audio").onclick = () => setType("audio");
+$("f_video").onclick = () => setType("video");
+$("q").addEventListener("input", () => applyFiltersAndRender());
+$("sortSel").addEventListener("change", () => { SORT_MODE = $("sortSel").value; applyFiltersAndRender(); });
+
+function setType(t){
+  TYPE_FILTER = t;
+  $("f_all").classList.toggle("active", t==="all");
+  $("f_audio").classList.toggle("active", t==="audio");
+  $("f_video").classList.toggle("active", t==="video");
+  applyFiltersAndRender();
 }
-
-$("f_all").onclick = () => setFilter("all");
-$("f_audio").onclick = () => setFilter("audio");
-$("f_video").onclick = () => setFilter("video");
-
-$("sortSel").onchange = () => {
-  SORT_MODE = $("sortSel").value;
-  renderList();
-};
-
-$("q").oninput = () => renderList();
 
 /* =========================
-   Data loading
+   Rendering list
 ========================= */
+function contentTypeLabel(t){ return t === "audio" ? "پادکست" : "ویدیو"; }
+
 function getContentCategoryKey(c){
-  return c.category_key || "";
+  // محتوا باید ستون category_key داشته باشد. اگر نداره، "other"
+  // ما فقط 5 دسته داریم؛ هرچی غیر از این‌ها "other" می‌شود.
+  const k = (c.category_key || "").trim();
+  if (CATEGORIES.some(x => x.key === k)) return k;
+  return "other";
 }
 
-async function loadAllContents(){
-  ALL_CONTENTS = await sGet("contents?select=id,title,type,duration_seconds,file_path,category_key,created_at&order=id.desc&limit=5000");
+function applyFiltersAndRender(){
+  if (!CURRENT_CATEGORY) return;
+
+  const q = ($("q").value || "").trim().toLowerCase();
+
+  // 1) category filter
+  let items = ALL_CONTENTS.filter(c => {
+    const k = getContentCategoryKey(c);
+    return k === CURRENT_CATEGORY;
+  });
+
+  // اگر دسته انتخاب شد ولی چیزی نبود، یک پیام
+  if (!items.length){
+    $("list").innerHTML = `<div class="card empty">در این دسته هنوز محتوایی ثبت نشده.</div>`;
+    updateCategoryProgress(items);
+    return;
+  }
+
+  // 2) type filter
+  if (TYPE_FILTER !== "all"){
+    items = items.filter(x => x.type === TYPE_FILTER);
+  }
+
+  // 3) search
+  if (q){
+    items = items.filter(x => (x.title || "").toLowerCase().includes(q));
+  }
+
+  // 4) compute per-item derived: progress, likes, remaining, engagement
+  // 5) sort
+  items.sort((a,b) => compareItems(a,b));
+
+  renderItems(items);
+  updateCategoryProgress(items);
 }
 
-async function loadMyProgress(){
-  progressByContent.clear();
-  const rows = await sGet(`progress?select=content_id,last_position_seconds,completion_percent,updated_at,duration_seconds&telegram_id=eq.${encodeURIComponent(TELEGRAM_ID)}&limit=5000`);
-  rows.forEach(r => {
-    progressByContent.set(r.content_id, r);
+function compareItems(a,b){
+  const pa = progressByContent.get(a.id);
+  const pb = progressByContent.get(b.id);
+
+  const pctA = Number(pa?.completion_percent || 0);
+  const pctB = Number(pb?.completion_percent || 0);
+
+  const incompleteA = pctA < 99.9;
+  const incompleteB = pctB < 99.9;
+
+  const likesA = likeCountByContent.get(a.id) || 0;
+  const likesB = likeCountByContent.get(b.id) || 0;
+
+  const engA = engagementByContent.get(a.id) || 0;
+  const engB = engagementByContent.get(b.id) || 0;
+
+  const createdA = a.created_at ? new Date(a.created_at).getTime() : a.id;
+  const createdB = b.created_at ? new Date(b.created_at).getTime() : b.id;
+
+  // sort modes
+  if (SORT_MODE === "newest"){
+    return createdB - createdA;
+  }
+  if (SORT_MODE === "liked"){
+    return (likesB - likesA) || (createdB - createdA);
+  }
+  if (SORT_MODE === "engaging"){
+    return (engB - engA) || (createdB - createdA);
+  }
+
+  // smart default:
+  // 1) incomplete on top
+  if (incompleteA !== incompleteB) return incompleteA ? -1 : 1;
+  // 2) within incomplete: higher remaining? (actually we want closer to finish? let's do lower pct first? no, show closer to finish to complete)
+  if (incompleteA && incompleteB) {
+    // show higher pct first to encourage completion
+    if (pctA !== pctB) return pctB - pctA;
+  }
+  // 3) newest next
+  return createdB - createdA;
+}
+
+function renderItems(items){
+  const list = $("list");
+  list.innerHTML = "";
+
+  items.forEach(item => {
+    const p = progressByContent.get(item.id);
+    const pct = Number(p?.completion_percent || 0);
+    const lastPos = Number(p?.last_position_seconds || 0);
+    const duration = Number(item.duration_seconds || 0);
+    const remaining = Math.max(0, duration - lastPos);
+
+    const likeCount = likeCountByContent.get(item.id) || 0;
+    const isLiked = likedByMe.has(item.id);
+
+    const card = document.createElement("div");
+    card.className = "card";
+
+    card.innerHTML = `
+      <div class="itemHead">
+        <div style="flex:1; min-width:0;">
+          <div class="itemTitle">${item.title}</div>
+          <div class="meta">
+            <span class="tag">${contentTypeLabel(item.type)}</span>
+            <span class="tag">مدت ${secondsToMin(duration)}</span>
+            <span class="tag">باقی‌مانده ${secondsToMin(remaining)}</span>
+            <span class="tag">♡ ${likeCount}</span>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:10px; align-items:center;">
+          <button class="likeBtn ${isLiked ? "liked" : ""}" data-like="${item.id}" title="لایک">
+            ${isLiked ? "♥" : "♡"} <span>${likeCount}</span>
+          </button>
+          <button class="btnPrimary" data-play="${item.id}">پخش</button>
+        </div>
+      </div>
+
+      <div class="progressRow">
+        <div class="bar"><div style="width:${pct}%;"></div></div>
+        <div class="percent">${pct.toFixed(0)}%</div>
+      </div>
+    `;
+
+    // handlers
+    card.querySelector(`[data-play="${item.id}"]`).onclick = () => openPlayer(item);
+    card.querySelector(`[data-like="${item.id}"]`).onclick = async () => {
+      await toggleLike(item.id);
+      // update this card like UI immediately
+      applyFiltersAndRender();
+      // if player open on same content, update likes label
+      if (currentPlayerContent && currentPlayerContent.id === item.id){
+        $("nowLikes").textContent = `♡ ${likeCountByContent.get(item.id) || 0}`;
+      }
+    };
+
+    list.appendChild(card);
   });
 }
 
-async function loadLikesAndEngagementFor(ids){
-  likeCountByContent.clear();
-  engagementByContent.clear();
-  likedByMe.clear();
-
-  if (!ids.length) return;
-
-  const inList = ids.join(",");
-
-  const likeCounts = await sGet(`likes?select=content_id&content_id=in.(${inList})`);
-  likeCounts.forEach(r => likeCountByContent.set(r.content_id, (likeCountByContent.get(r.content_id)||0)+1));
-
-  const myLikes = await sGet(`likes?select=content_id&telegram_id=eq.${encodeURIComponent(TELEGRAM_ID)}&content_id=in.(${inList})`);
-  myLikes.forEach(r => likedByMe.add(r.content_id));
-
-  const eng = await sGet(`progress?select=content_id,active_seconds&content_id=in.(${inList})`);
-  eng.forEach(r => engagementByContent.set(r.content_id, (engagementByContent.get(r.content_id)||0) + Number(r.active_seconds||0)));
-}
-
-function updateCategoryStats(){
+/* =========================
+   Progress summaries
+========================= */
+function updateCategoryProgress(itemsInView){
+  // پیشرفت در دسته: میانگین completion روی کل محتواهای دسته (حتی اگر فیلتر نوع فعال باشد)
+  // برای اینکه منصف باشد، روی کل محتواهای دسته حساب می‌کنیم نه فقط view.
   const allInCat = ALL_CONTENTS.filter(c => getContentCategoryKey(c) === CURRENT_CATEGORY);
   if (!allInCat.length){
     $("catProgress").textContent = "0%";
@@ -925,369 +1207,156 @@ function updateOverallProgress(){
     return;
   }
   let sum = 0;
-  ALL_CONTENTS.forEach(c => {
-    sum += Number(progressByContent.get(c.id)?.completion_percent || 0);
-  });
+  ALL_CONTENTS.forEach(c => sum += Number(progressByContent.get(c.id)?.completion_percent || 0));
   const avg = sum / ALL_CONTENTS.length;
   $("overallProgress").textContent = `${avg.toFixed(0)}%`;
 }
 
 /* =========================
-   Continue item
+   Player (no download, no last point label)
 ========================= */
-function computeContinue(){
-  let best = null;
-  for (const c of ALL_CONTENTS){
-    const p = progressByContent.get(c.id);
-    const pct = Number(p?.completion_percent||0);
-    const pos = Number(p?.last_position_seconds||0);
-    if (pct > 0 && pct < 100){
-      if (!best) best = {c, pct, pos};
-      else if (p?.updated_at && best.c && new Date(p.updated_at) > new Date(progressByContent.get(best.c.id)?.updated_at || 0)){
-        best = {c, pct, pos};
-      }
-    }
-  }
-  continueItem = best;
-  if (!best){
-    $("continueTitle").textContent = "—";
-    $("btnContinue").disabled = true;
-    return;
-  }
-  $("continueTitle").textContent = safeText(best.c.title || "—");
-  $("btnContinue").disabled = false;
+let currentPlayerContent = null;
+let progressTimer = null;
+
+$("btnClose").onclick = closePlayer;
+$("overlay").addEventListener("click", (e) => {
+  if (e.target === $("overlay")) closePlayer();
+});
+
+function setMotivationLine(pct){
+  const p = Math.floor(pct);
+  if (p >= 95) return "فقط چند ثانیه تا پایان! عالیه 👌";
+  if (p >= 70) return "تقریباً تمومش کردی. همین یک‌ذره رو ببند.";
+  if (p >= 30) return "خوبه. ادامه بده تا نکته‌های اصلی جمع بشه.";
+  return "شروع عالیه. فقط ۲ دقیقه دیگه ادامه بده.";
 }
 
-$("btnContinue").onclick = () => {
-  if (!continueItem) return;
-  openPlayer(continueItem.c.id);
-};
+async function openPlayer(content){
+  currentPlayerContent = content;
 
-/* =========================
-   List render
-========================= */
-function sortContents(arr){
-  const a = [...arr];
+  // UI header
+  $("nowTitle").textContent = content.title;
+  $("nowType").textContent = contentTypeLabel(content.type);
+  $("nowDuration").textContent = `مدت ${secondsToMin(content.duration_seconds || 0)}`;
 
-  if (SORT_MODE === "newest"){
-    a.sort((x,y) => {
-      const dx = x.created_at ? new Date(x.created_at).getTime() : (x.id||0);
-      const dy = y.created_at ? new Date(y.created_at).getTime() : (y.id||0);
-      return dy - dx;
-    });
-    return a;
-  }
+  const likes = likeCountByContent.get(content.id) || 0;
+  $("nowLikes").textContent = `♡ ${likes}`;
 
-  if (SORT_MODE === "liked"){
-    a.sort((x,y) => (likeCountByContent.get(y.id)||0) - (likeCountByContent.get(x.id)||0));
-    return a;
-  }
-
-  if (SORT_MODE === "engaging"){
-    a.sort((x,y) => (engagementByContent.get(y.id)||0) - (engagementByContent.get(x.id)||0));
-    return a;
-  }
-
-  a.sort((x,y) => {
-    const px = Number(progressByContent.get(x.id)?.completion_percent||0);
-    const py = Number(progressByContent.get(y.id)?.completion_percent||0);
-    const ix = (px>0 && px<100) ? 1 : 0;
-    const iy = (py>0 && py<100) ? 1 : 0;
-    if (iy !== ix) return iy - ix;
-    const dx = x.created_at ? new Date(x.created_at).getTime() : (x.id||0);
-    const dy = y.created_at ? new Date(y.created_at).getTime() : (y.id||0);
-    return dy - dx;
-  });
-  return a;
-}
-
-function renderList(){
-  const list = $("list");
-  list.innerHTML = "";
-
-  const q = ($("q").value||"").trim().toLowerCase();
-
-  let items = ALL_CONTENTS.filter(c => getContentCategoryKey(c) === CURRENT_CATEGORY);
-
-  if (FILTER_TYPE !== "all"){
-    items = items.filter(c => c.type === FILTER_TYPE);
-  }
-
-  if (q){
-    items = items.filter(c => (c.title||"").toLowerCase().includes(q));
-  }
-
-  items = sortContents(items);
-
-  if (!items.length){
-    list.innerHTML = `<div class="empty">موردی پیدا نشد.</div>`;
-    return;
-  }
-
-  items.forEach(c => {
-    const p = progressByContent.get(c.id);
-    const pct = Number(p?.completion_percent||0);
-    const likes = likeCountByContent.get(c.id)||0;
-    const liked = likedByMe.has(c.id);
-
-    const dur = Number(c.duration_seconds||0);
-    const pos = Number(p?.last_position_seconds||0);
-    const remaining = dur ? Math.max(0, dur - pos) : 0;
-
-    const card = document.createElement("div");
-    card.className = "card";
-
-    card.innerHTML = `
-      <div class="itemHead">
-        <div style="min-width:0;">
-          <div class="itemTitle">${safeText(c.title||"—")}</div>
-          <div class="meta">
-            <span class="tag">${c.type === "audio" ? "پادکست" : "ویدیو"}</span>
-            <span class="tag">${dur ? fmtTime(dur) : "مدت: —"}</span>
-            <span class="tag">لایک: ${likes}</span>
-          </div>
-        </div>
-
-        <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
-          <button class="likeBtn ${liked ? "liked":""}" data-like="${c.id}">
-            ❤ <span>${likes}</span>
-          </button>
-          <button class="btnPrimary" data-play="${c.id}">پخش</button>
-        </div>
-      </div>
-
-      <div class="progressRow">
-        <div class="bar"><div style="width:${pct.toFixed(0)}%"></div></div>
-        <div class="percent">${pct.toFixed(0)}%</div>
-      </div>
-
-      <div class="hint">باقی‌مانده: ${dur ? fmtTime(remaining) : "—"}</div>
-    `;
-
-    card.querySelectorAll("[data-play]").forEach(b => b.onclick = () => openPlayer(Number(b.getAttribute("data-play"))));
-    card.querySelectorAll("[data-like]").forEach(b => b.onclick = () => toggleLike(Number(b.getAttribute("data-like"))));
-
-    list.appendChild(card);
-  });
-
-  updateCategoryStats();
-}
-
-/* =========================
-   Category selection
-========================= */
-async function selectCategory(key){
-  CURRENT_CATEGORY = key;
-  $("categoryGate").classList.add("hidden");
-  $("listArea").classList.remove("hidden");
-  setControlsVisible(true);
-
-  const cat = CATEGORY_MAP.find(x => x.key === key);
-  $("catPill").textContent = cat ? `دسته: ${cat.name}` : "—";
-
-  const ids = ALL_CONTENTS.filter(c => getContentCategoryKey(c) === key).map(c => c.id);
-  await loadLikesAndEngagementFor(ids);
-
-  renderList();
-}
-
-/* =========================
-   Likes
-========================= */
-async function toggleLike(contentId){
-  const liked = likedByMe.has(contentId);
-
-  try{
-    if (!liked){
-      await sPost("likes", [{
-        telegram_id: TELEGRAM_ID,
-        content_id: contentId,
-        created_at: new Date().toISOString()
-      }], false);
-      likedByMe.add(contentId);
-      likeCountByContent.set(contentId, (likeCountByContent.get(contentId)||0)+1);
-    } else {
-      await sFetch(`likes?telegram_id=eq.${encodeURIComponent(TELEGRAM_ID)}&content_id=eq.${contentId}`, { method:"DELETE" });
-      likedByMe.delete(contentId);
-      likeCountByContent.set(contentId, Math.max(0,(likeCountByContent.get(contentId)||0)-1));
-    }
-    renderList();
-  }catch(e){
-    console.error(e);
-  }
-}
-
-/* =========================
-   Player
-========================= */
-let currentContent = null;
-let currentMediaEl = null;
-let lastTick = 0;
-let tickTimer = null;
-
-function openPlayer(contentId){
-  const c = ALL_CONTENTS.find(x => x.id === contentId);
-  if (!c) return;
-  currentContent = c;
-
-  $("nowTitle").textContent = safeText(c.title||"—");
-  $("nowType").textContent = c.type === "audio" ? "پادکست" : "ویدیو";
-  $("nowDuration").textContent = c.duration_seconds ? `مدت: ${fmtTime(c.duration_seconds)}` : "مدت: —";
-
-  const likes = likeCountByContent.get(c.id)||0;
-  $("nowLikes").textContent = `لایک: ${likes}`;
-
-  const p = progressByContent.get(c.id);
-  const pos = Number(p?.last_position_seconds||0);
-  const pct = Number(p?.completion_percent||0);
-
-  updatePlayerProgressUI(pos, pct);
-
+  // build media
   const area = $("playerArea");
   area.innerHTML = "";
 
-  let el;
-  if (c.type === "video"){
-    el = document.createElement("video");
-    el.setAttribute("playsinline","true");
-    el.controls = true;
-  } else {
-    el = document.createElement("audio");
-    el.controls = true;
+  const isVideo = content.type === "video";
+  const media = document.createElement(isVideo ? "video" : "audio");
+  media.controls = true;
+  media.src = content.file_path;
+
+  // disable download as much as possible
+  media.setAttribute("controlsList", "nodownload noplaybackrate");
+  media.setAttribute("disablePictureInPicture", "true");
+  media.oncontextmenu = () => false;
+  if (isVideo) media.playsInline = true;
+
+  area.appendChild(media);
+
+  // show modal
+  $("overlay").classList.add("show");
+  $("overlay").setAttribute("aria-hidden", "false");
+
+  // resume silently
+  const p = progressByContent.get(content.id);
+  const lastPos = Number(p?.last_position_seconds || 0);
+  const duration = Number(content.duration_seconds || 0);
+
+  function updateUI(currentTime){
+    const pos = Math.floor(currentTime || 0);
+    const pct = calcPercent(pos, duration);
+    $("nowPercent").textContent = `${pct.toFixed(0)}%`;
+    $("nowBar").style.width = `${pct}%`;
+
+    const remaining = Math.max(0, duration - pos);
+    $("nowRemaining").textContent = `باقی‌مانده ${secondsToMin(remaining)}`;
+    $("motivateLine").textContent = setMotivationLine(pct);
   }
-  el.src = c.file_path;
-  el.controlsList = "nodownload";
-  el.disablePictureInPicture = true;
-  el.preload = "metadata";
 
-  area.appendChild(el);
-  currentMediaEl = el;
+  media.addEventListener("loadedmetadata", () => {
+    if (lastPos > 0 && lastPos < (media.duration || 999999)) {
+      media.currentTime = lastPos;
+    }
+    updateUI(media.currentTime);
+  });
 
-  el.addEventListener("loadedmetadata", () => {
-    if (c.duration_seconds && Number(c.duration_seconds) > 0) return;
-    const dur = Math.floor(el.duration || 0);
-    if (dur > 0){
-      c.duration_seconds = dur;
+  // track progress every 10 seconds + on pause/end
+  let lastSentAt = 0;
+
+  async function saveNow(force=false){
+    const pos = Math.floor(media.currentTime || 0);
+    const pct = calcPercent(pos, duration);
+    updateUI(media.currentTime);
+
+    // ذخیره
+    try{
+      await sPost("progress", [{
+        telegram_id: TELEGRAM_ID,
+        content_id: content.id,
+        last_position_seconds: pos,
+        max_position_seconds: pos,
+        duration_seconds: duration || 0,
+        completion_percent: Number(pct.toFixed(2)),
+        active_seconds: pos, // MVP ساده (اگر خواستی دقیق‌تر کنیم، بعداً)
+        updated_at: new Date().toISOString()
+      }], true);
+
+      // cache update
+      progressByContent.set(content.id, {
+        content_id: content.id,
+        last_position_seconds: pos,
+        completion_percent: Number(pct.toFixed(2)),
+        updated_at: new Date().toISOString(),
+        duration_seconds: duration || 0
+      });
+      updateOverallProgress();
+    }catch(e){
+      console.error(e);
+    }
+  }
+
+  media.addEventListener("timeupdate", () => {
+    updateUI(media.currentTime);
+    if (Math.abs(media.currentTime - lastSentAt) >= 10) {
+      lastSentAt = media.currentTime;
+      saveNow(false);
     }
   });
 
-  el.addEventListener("canplay", () => {
-    try{
-      if (pos > 0 && pos < (el.duration || 999999)) el.currentTime = pos;
-    }catch(e){}
+  media.addEventListener("pause", () => saveNow(true));
+  media.addEventListener("ended", () => {
+    media.currentTime = duration || media.duration || 0;
+    saveNow(true);
   });
 
-  el.addEventListener("timeupdate", onTick);
-  el.addEventListener("play", startTicking);
-  el.addEventListener("pause", stopTicking);
-  el.addEventListener("ended", () => {
-    stopTicking();
-    saveProgress(true);
-  });
+  // initial UI
+  updateUI(lastPos);
 
-  $("overlay").classList.add("show");
-  $("overlay").setAttribute("aria-hidden","false");
-  lastTick = Date.now();
+  // subtle: stop any previous timer
+  if (progressTimer) clearInterval(progressTimer);
 }
-
-$("btnClose").onclick = () => closePlayer();
-$("overlay").addEventListener("click", (e) => {
-  if (e.target.id === "overlay") closePlayer();
-});
 
 function closePlayer(){
-  if (!currentContent) {
-    $("overlay").classList.remove("show");
-    $("overlay").setAttribute("aria-hidden","true");
-    return;
-  }
-  try{ saveProgress(false); }catch(e){}
-  stopTicking();
-  try{
-    if (currentMediaEl){
-      currentMediaEl.pause();
-      currentMediaEl.src = "";
-    }
-  }catch(e){}
-  currentContent = null;
-  currentMediaEl = null;
-
   $("overlay").classList.remove("show");
-  $("overlay").setAttribute("aria-hidden","true");
-
-  computeContinue();
-  renderList();
-  updateOverallProgress();
-}
-
-function updatePlayerProgressUI(pos, pct){
-  const dur = Number(currentContent?.duration_seconds||0);
-  const remaining = dur ? Math.max(0, dur - pos) : 0;
-  $("nowRemaining").textContent = dur ? `باقی‌مانده: ${fmtTime(remaining)}` : "باقی‌مانده: —";
-
-  $("nowPercent").textContent = `${pct.toFixed(0)}%`;
-  $("nowBar").style.width = `${pct.toFixed(0)}%`;
-}
-
-function onTick(){
-  if (!currentMediaEl || !currentContent) return;
-  const pos = Math.floor(currentMediaEl.currentTime || 0);
-  const dur = Number(currentContent.duration_seconds||0) || Math.floor(currentMediaEl.duration||0) || 0;
-  const pct = dur ? Math.min(100, (pos/dur)*100) : 0;
-  updatePlayerProgressUI(pos, pct);
-}
-
-function startTicking(){
-  stopTicking();
-  lastTick = Date.now();
-  tickTimer = setInterval(() => {
-    saveProgress(false, true);
-  }, 15000);
-}
-function stopTicking(){
-  if (tickTimer){
-    clearInterval(tickTimer);
-    tickTimer = null;
-  }
-}
-
-async function saveProgress(forceComplete=false, isTick=false){
-  if (!currentMediaEl || !currentContent) return;
-
-  const pos = Math.floor(currentMediaEl.currentTime || 0);
-  const dur = Number(currentContent.duration_seconds||0) || Math.floor(currentMediaEl.duration||0) || 0;
-  const pct = dur ? Math.min(100, (pos/dur)*100) : 0;
-  const completion_percent = forceComplete ? 100 : pct;
-
-  const now = Date.now();
-  let activeSeconds = 0;
-  if (isTick){
-    activeSeconds = Math.max(0, Math.floor((now - lastTick)/1000));
-    lastTick = now;
-  }
-
-  const payload = [{
-    telegram_id: TELEGRAM_ID,
-    content_id: currentContent.id,
-    last_position_seconds: pos,
-    completion_percent: completion_percent,
-    duration_seconds: dur || null,
-    active_seconds: activeSeconds || 0,
-    updated_at: new Date().toISOString()
-  }];
-
-  try{
-    await sPost("progress", payload, true);
-    progressByContent.set(currentContent.id, payload[0]);
-  }catch(e){
-    console.error(e);
-  }
+  $("overlay").setAttribute("aria-hidden", "true");
+  currentPlayerContent = null;
+  if (progressTimer) clearInterval(progressTimer);
+  progressTimer = null;
+  // refresh list UI (percent updates)
+  if (CURRENT_CATEGORY) applyFiltersAndRender();
 }
 
 /* =========================
-   Main
+   Refresh All
 ========================= */
 async function refreshAll(){
+  // 1) Ensure user profile exists
   userProfile = await loadUserProfile();
 
   // Gate: require manual profile fields before anything else loads
@@ -1301,27 +1370,64 @@ async function refreshAll(){
     return;
   }
 
-  await loadAllContents();
+  // 2) load contents
+  // IMPORTANT: contents table needs columns: category_key, created_at
+  // If created_at is missing, we fallback to id sorting.
+  ALL_CONTENTS = await sGet("contents?select=id,title,type,duration_seconds,file_path,category_key,created_at&order=id.desc&limit=5000");
+
+  // 3) load my progress
   await loadMyProgress();
 
-  updateOverallProgress();
-  computeContinue();
+  // 4) continue watching
+  continueItem = await loadContinueWatching();
+  updateContinueUI();
 
+  // 5) overall progress
+  updateOverallProgress();
+
+  // 6) categories UI
   renderCategories();
+
+  // 7) precompute likes + engagement for current category when chosen
+  // (we compute on demand inside selectCategory)
 }
 
-(async function init(){
-  if (!SB_URL || !SB_ANON_KEY){
-    $("continueHint").style.display = "block";
-    $("continueHint").textContent = "تنظیمات Supabase کامل نیست.";
-    return;
+/* =========================
+   Start
+========================= */
+(async () => {
+  try{
+    await refreshAll();
+
+    // attach after category selection:
+    // whenever category changes, reload likes+engagement for that category contents
+    const _selectCategory = selectCategory;
+    selectCategory = async (key) => {
+      CURRENT_CATEGORY = key;
+
+      // for this category, get ids
+      const ids = ALL_CONTENTS
+        .filter(c => getContentCategoryKey(c) === key)
+        .map(c => c.id);
+
+      // load likes + engagement for these ids (for sorting)
+      try{
+        await loadLikesForContents(ids);
+      }catch(e){ console.error(e); likeCountByContent = new Map(); likedByMe = new Set(); }
+
+      try{
+        await loadEngagementAllUsers(ids);
+      }catch(e){ console.error(e); engagementByContent = new Map(); }
+
+      // now call original select
+      _selectCategory(key);
+    };
+
+  }catch(e){
+    console.error(e);
+    // minimal fail UI
+    $("catGrid").innerHTML = `<div class="card empty">خطا در بارگذاری. تنظیمات Supabase یا جدول‌ها را بررسی کنید.</div>`;
   }
-  if (!TELEGRAM_ID){
-    $("continueHint").style.display = "block";
-    $("continueHint").textContent = "این مینی‌اپ باید داخل تلگرام باز شود.";
-    return;
-  }
-  await refreshAll();
 })();
 </script>
 </body>
