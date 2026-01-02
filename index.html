@@ -742,6 +742,29 @@ function calcPercent(pos, duration){
 function show(el){ if(!el) return; el.hidden = false; el.classList.remove("hidden"); el.style.display = ""; el.style.visibility=""; el.style.height=""; el.style.maxHeight=""; el.style.overflow=""; el.style.pointerEvents=""; }
 function hide(el){ if(!el) return; el.hidden = true; el.classList.add("hidden"); el.style.display = "none"; el.style.visibility="hidden"; el.style.height="0"; el.style.maxHeight="0"; el.style.overflow="hidden"; el.style.pointerEvents="none"; }
 
+function captureCategoryGate(){
+  categoryGateEl = $("categoryGate");
+  categoryGateParent = categoryGateEl ? categoryGateEl.parentNode : null;
+  categoryGateNextSibling = categoryGateEl ? categoryGateEl.nextSibling : null;
+}
+
+function detachCategoryGate(){
+  if(!categoryGateEl) captureCategoryGate();
+  if(!categoryGateEl || !categoryGateEl.parentNode) return;
+  categoryGateEl.parentNode.removeChild(categoryGateEl);
+}
+
+function attachCategoryGate(){
+  if(!categoryGateEl) captureCategoryGate();
+  if(!categoryGateEl || !categoryGateParent) return;
+  if(categoryGateEl.parentNode) return; // already attached
+  if(categoryGateNextSibling && categoryGateNextSibling.parentNode === categoryGateParent){
+    categoryGateParent.insertBefore(categoryGateEl, categoryGateNextSibling);
+  }else{
+    categoryGateParent.appendChild(categoryGateEl);
+  }
+}
+
 /* =========================
    Supabase REST
 ========================= */
@@ -815,6 +838,10 @@ let CURRENT_CATEGORY = null;
 let TYPE_FILTER = "all";     // all | audio | video
 let SORT_MODE = "smart";     // smart | newest | liked | engaging
 
+let categoryGateEl = null;
+let categoryGateParent = null;
+let categoryGateNextSibling = null;
+
 let userProfile = null;
 
 let progressByContent = new Map();     // content_id -> {last_position_seconds, completion_percent, updated_at, duration_seconds}
@@ -886,6 +913,7 @@ $("btnSaveProfile").onclick = async () => {
     userProfile = await loadUserProfile();
     hideOnboarding();
     // بعد از ثبت، UI را ریفرش می‌کنیم
+    captureCategoryGate();
     await refreshAll();
   }catch(e){
     showErr("ثبت اطلاعات انجام نشد. تنظیمات Supabase را چک کنید.");
@@ -989,7 +1017,7 @@ function updateContinueUI(){
 ========================= */
 function selectCategory(key){
   CURRENT_CATEGORY = key;
-  hide($("categoryGate")); $("categoryGate").hidden = true; $("categoryGate").style.display="none";
+  detachCategoryGate();
   show($("listArea"));
   show($("controlsBlock"));
   show($("btnChangeCategory"));
@@ -1013,7 +1041,8 @@ $("btnChangeCategory").onclick = () => {
   hide($("listArea"));
   hide($("controlsBlock"));
   hide($("btnChangeCategory"));
-  $("categoryGate").hidden = false; show($("categoryGate"));
+  attachCategoryGate();
+  show($("categoryGate"));
 };
 
 /* =========================
