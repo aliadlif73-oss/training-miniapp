@@ -558,7 +558,6 @@
 
     <!-- Category gate -->
     <div id="categoryGate">
-
       <div style="display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap; margin-top:12px;">
         <div class="pill" style="border-radius:999px;">
           پیشرفت شما:
@@ -572,15 +571,6 @@
 
         <div id="continueHint" class="hint" style="margin:0; flex-basis:100%; display:none;"></div>
       </div>
-
-<button id="btnContinue" class="btnGhost" style="border-radius:999px;" disabled>
-            ادامه:
-            <span id="continueTitle" style="font-weight:900; margin-right:6px;">—</span>
-          </button>
-        </div>
-        <div class="hint" id="continueHint" style="margin-top:8px;">برای شروع، یک دسته را انتخاب کنید. بعد می‌توانید هر زمان دسته را تغییر دهید.</div>
-      </div>
-
 
       <div class="catGrid" id="catGrid"></div>
     </div>
@@ -1041,8 +1031,17 @@ $("btnChangeCategory").onclick = () => {
   hide($("listArea"));
   hide($("controlsBlock"));
   hide($("btnChangeCategory"));
+
+  // bring category gate back (hard attach) and re-render categories (safe)
   attachCategoryGate();
   show($("categoryGate"));
+  renderCategories();
+
+  // reset filters/search for a clean start
+  $("q").value = "";
+  setType("all");
+  $("sortSel").value = "smart";
+  SORT_MODE = "smart";
 };
 
 /* =========================
