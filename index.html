@@ -739,8 +739,8 @@ function calcPercent(pos, duration){
   if (!duration || duration <= 0) return 0;
   return clamp((pos / duration) * 100, 0, 100);
 }
-function show(el){ el.classList.remove("hidden"); el.style.display = ""; }
-function hide(el){ el.classList.add("hidden"); el.style.display = "none"; }
+function show(el){ if(!el) return; el.hidden = false; el.classList.remove("hidden"); el.style.display = ""; el.style.visibility=""; el.style.height=""; el.style.maxHeight=""; el.style.overflow=""; el.style.pointerEvents=""; }
+function hide(el){ if(!el) return; el.hidden = true; el.classList.add("hidden"); el.style.display = "none"; el.style.visibility="hidden"; el.style.height="0"; el.style.maxHeight="0"; el.style.overflow="hidden"; el.style.pointerEvents="none"; }
 
 /* =========================
    Supabase REST
@@ -989,7 +989,7 @@ function updateContinueUI(){
 ========================= */
 function selectCategory(key){
   CURRENT_CATEGORY = key;
-  hide($("categoryGate"));
+  hide($("categoryGate")); $("categoryGate").hidden = true; $("categoryGate").style.display="none";
   show($("listArea"));
   show($("controlsBlock"));
   show($("btnChangeCategory"));
@@ -1013,7 +1013,7 @@ $("btnChangeCategory").onclick = () => {
   hide($("listArea"));
   hide($("controlsBlock"));
   hide($("btnChangeCategory"));
-  show($("categoryGate"));
+  $("categoryGate").hidden = false; show($("categoryGate"));
 };
 
 /* =========================
