@@ -450,67 +450,7 @@
       font-size: 13px;
       line-height: 1.7;
     }
-
-    /* Onboarding modal */
-    .modalBackdrop{
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,.60);
-      display:none;
-      align-items:center;
-      justify-content:center;
-      padding: 18px;
-      z-index: 1000;
-    }
-    .modalBackdrop.show{ display:flex; }
-    .modal{
-      width: min(560px, 96vw);
-      background: rgba(15,23,42,.95);
-      border: 1px solid var(--border);
-      border-radius: 22px;
-      box-shadow: 0 24px 60px rgba(0,0,0,.55);
-      padding: 16px;
-    }
-    .modal h2{
-      margin: 0 0 6px;
-      font-size: 18px;
-      font-weight: 900;
-    }
-    .modal p{
-      margin: 0 0 12px;
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.8;
-    }
-    .formGrid{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-    @media (max-width: 560px){
-      .formGrid{ grid-template-columns: 1fr; }
-    }
-    .inp{
-      width:100%;
-      padding: 12px 12px;
-      border-radius: 14px;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,.04);
-      color: var(--text);
-      outline:none;
-      font-family: inherit;
-      font-weight: 700;
-    }
-    .inp::placeholder{ color: rgba(156,163,175,.85); }
-    .modalFooter{
-      margin-top: 12px;
-      display:flex;
-      justify-content:flex-end;
-      gap: 10px;
-      align-items:center;
-    }
-
-    /* Small helpers */
+/* Small helpers */
     .muted{ color: var(--muted); }
     .hidden{ display:none !important; }
   </style>
@@ -607,7 +547,6 @@
           <div class="meta" style="margin-top:8px;">
             <span class="tag" id="nowType">—</span>
             <span class="tag" id="nowDuration">—</span>
-            <span class="tag" id="nowRemaining">—</span>
             <span class="tag" id="nowLikes">♡ 0</span>
           </div>
         </div>
@@ -629,25 +568,7 @@
     </div>
   </div>
 
-  <!-- Onboarding modal -->
-  <div id="onboardBackdrop" class="modalBackdrop" aria-hidden="true">
-    <div class="modal">
-      <h2>ثبت اطلاعات اولیه</h2>
-      <p>برای اینکه گزارش‌ها دقیق و اسم‌دار باشند، لطفاً این اطلاعات را یک‌بار وارد کنید.</p>
-
-      <div class="formGrid">
-        <input id="inpName" class="inp" placeholder="نام و نام خانوادگی" />
-        <input id="inpRole" class="inp" placeholder="سمت شغلی" />
-        <input id="inpMobile" class="inp" placeholder="شماره موبایل (مثلاً 0912...)" inputmode="tel" />
-        <input id="inpDept" class="inp" placeholder="واحد (اختیاری)" />
-      </div>
-
-      <div class="modalFooter">
-        <button id="btnSaveProfile" class="btnPrimary">ثبت و ورود</button>
-      </div>
-      <div class="hint" id="onboardErr" style="color:rgba(239,68,68,.95); display:none;"></div>
-    </div>
-  </div>
+</div>
 
 <script>
 /* =========================
@@ -847,78 +768,20 @@ let continueItem = null;
 $("logoImg").src = LOGO_DATA_URI;
 
 /* =========================
-   Onboarding (one-time)
+   Telegram Profile (no onboarding)
 ========================= */
-async function loadUserProfile(){
-  // users?select=...&telegram_id=eq.X
-  const rows = await sGet(`users?select=telegram_id,full_name,job_title,mobile,department&telegram_id=eq.${encodeURIComponent(TELEGRAM_ID)}&limit=1`);
-  return rows[0] || null;
-}
-
-function showOnboarding(existing){
-  $("onboardErr").style.display = "none";
-
-  // Prefill only from existing DB values (NOT from Telegram)
-  try{
-    $("inpName").value   = (existing?.full_name  || "").toString();
-    $("inpRole").value   = (existing?.job_title  || "").toString();
-    $("inpMobile").value = (existing?.mobile     || "").toString();
-    $("inpDept").value   = (existing?.department || "").toString();
-  }catch(e){}
-
-  $("onboardBackdrop").classList.add("show");
-}
-
-function hideOnboarding(){
-  $("onboardBackdrop").classList.remove("show");
-}
-
-function validMobile(m){
-  const x = (m||"").trim();
-  // ساده و کافی برای MVP: 11 رقم و شروع با 0
-  if (!x) return false;
-  return /^0\d{10}$/.test(x);
-}
-
-$("btnSaveProfile").onclick = async () => {
-  const full_name = ($("inpName").value||"").trim();
-  const job_title  = ($("inpRole").value||"").trim();
-  const mobile     = ($("inpMobile").value||"").trim();
-  const department = ($("inpDept").value||"").trim();
-
-  if (!full_name || full_name.length < 3) return showErr("نام و نام خانوادگی را کامل وارد کنید.");
-  if (!job_title || job_title.length < 2) return showErr("سمت شغلی را وارد کنید.");
-  if (!validMobile(mobile)) return showErr("شماره موبایل معتبر نیست. مثل 0912xxxxxxx");
-
-  try{
-    await sPost("users", [{
-      telegram_id: TELEGRAM_ID,
-      full_name,
-      job_title,
-      mobile,
-      department: department || null,
-      updated_at: new Date().toISOString()
-    }], true);
-
-    userProfile = await loadUserProfile();
-    hideOnboarding();
-    // بعد از ثبت، UI را ریفرش می‌کنیم
-    captureCategoryGate();
-    await refreshAll();
-  }catch(e){
-    showErr("ثبت اطلاعات انجام نشد. تنظیمات Supabase را چک کنید.");
-    console.error(e);
-  }
-};
-
-function showErr(msg){
-  $("onboardErr").textContent = msg;
-  $("onboardErr").style.display = "block";
+function getTelegramProfile(){
+  const u = tg?.initDataUnsafe?.user;
+  if(!u) return { full_name: null, username: null };
+  const full_name = [u.first_name, u.last_name].filter(Boolean).join(" ").trim() || null;
+  const username = u.username ? String(u.username) : null;
+  return { full_name, username };
 }
 
 /* =========================
    Progress / Likes / Engagement loaders
 ========================= */
+
 async function loadMyProgress(){
   const rows = await sGet(`progress?select=content_id,last_position_seconds,completion_percent,updated_at,duration_seconds&telegram_id=eq.${encodeURIComponent(TELEGRAM_ID)}&limit=5000`);
   progressByContent = new Map();
@@ -996,8 +859,7 @@ function updateContinueUI(){
   }
   const {content, progress} = continueItem;
   $("continueTitle").textContent = content.title.length > 18 ? content.title.slice(0,18) + "…" : content.title;
-  const remain = Math.max(0, (content.duration_seconds || 0) - (progress.last_position_seconds || 0));
-  $("continueHint").textContent = `باقی‌مانده: ${secondsToMin(remain)} • پیشرفت: ${Number(progress.completion_percent||0).toFixed(0)}%`;
+  $("continueHint").textContent = `پیشرفت: ${Number(progress.completion_percent||0).toFixed(0)}%`;
   $("btnContinue").disabled = false;
   $("btnContinue").onclick = () => openPlayer(content);
 }
@@ -1161,7 +1023,6 @@ function renderItems(items){
     const pct = Number(p?.completion_percent || 0);
     const lastPos = Number(p?.last_position_seconds || 0);
     const duration = Number(item.duration_seconds || 0);
-    const remaining = Math.max(0, duration - lastPos);
 
     const likeCount = likeCountByContent.get(item.id) || 0;
     const isLiked = likedByMe.has(item.id);
@@ -1176,7 +1037,6 @@ function renderItems(items){
           <div class="meta">
             <span class="tag">${contentTypeLabel(item.type)}</span>
             <span class="tag">مدت ${secondsToMin(duration)}</span>
-            <span class="tag">باقی‌مانده ${secondsToMin(remaining)}</span>
             <span class="tag">♡ ${likeCount}</span>
           </div>
         </div>
@@ -1319,9 +1179,6 @@ async function openPlayer(content){
     const pct = calcPercent(pos, duration);
     $("nowPercent").textContent = `${pct.toFixed(0)}%`;
     $("nowBar").style.width = `${pct}%`;
-
-    const remaining = Math.max(0, duration - pos);
-    $("nowRemaining").textContent = `باقی‌مانده ${secondsToMin(remaining)}`;
     $("motivateLine").textContent = setMotivationLine(pct);
   }
 
@@ -1403,19 +1260,22 @@ function closePlayer(){
    Refresh All
 ========================= */
 async function refreshAll(){
-  // 1) Ensure user profile exists
-  userProfile = await loadUserProfile();
+  // 1) Telegram profile (no onboarding)
+  userProfile = getTelegramProfile();
 
-  // Gate: require manual profile fields before anything else loads
-  const needsProfile = (!userProfile
-    || !userProfile.full_name
-    || !userProfile.job_title
-    || !userProfile.mobile);
+  // Optional: store what we can in users table (no blocking UI)
+  // NOTE: mobile/job_title are not available from Telegram Mini App.
+  try{
+    await sPost("users", [{
+      telegram_id: TELEGRAM_ID,
+      full_name: userProfile?.full_name,
+      job_title: null,
+      mobile: null,
+      department: null,
+      updated_at: new Date().toISOString()
+    }], true);
+  }catch(e){ /* ignore */ }
 
-  if (needsProfile){
-    showOnboarding(userProfile || null);
-    return;
-  }
 
   // 2) load contents
   // IMPORTANT: contents table needs columns: category_key, created_at
