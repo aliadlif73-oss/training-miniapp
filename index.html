@@ -6,8 +6,6 @@
   <title>آکادمی سیلانه سبز</title>
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
-  <!-- ✅ Supabase JS (UMD) برای آپلود استاندارد و بدون خطای 400 -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.min.js"></script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,14 +13,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap" rel="stylesheet">
 
   <style>
-    /* =========================
-       Theme vars (Light/Dark safe)
-    ========================= */
     :root{
       --page-max: 980px;
       --page-pad: 16px;
 
-      /* Light defaults (خوانا) */
       --bg: #f5f7fb;
       --card: rgba(255,255,255,.92);
       --text: #0b1220;
@@ -38,7 +32,6 @@
       --page-radius: 26px;
     }
 
-    /* ✅ Dark mode palette */
     @media (prefers-color-scheme: dark){
       :root{
         --bg:#0b1220;
@@ -54,7 +47,6 @@
       }
     }
 
-    /* ✅ Telegram theme override */
     body.tg{
       --bg: var(--tg-theme-bg-color, var(--bg));
       --card: var(--tg-theme-secondary-bg-color, var(--card));
@@ -74,7 +66,6 @@
       overflow-x:hidden;
     }
 
-    /* ✅ Full-bleed background but with rounded edges (no ugly side gaps) */
     body::before{
       content:"";
       position: fixed;
@@ -87,7 +78,6 @@
       box-shadow: 0 20px 70px rgba(0,0,0,.18);
       z-index: -1;
     }
-
     @media (prefers-color-scheme: dark){
       body::before{
         background:
@@ -104,11 +94,7 @@
       padding: 18px var(--page-pad) 28px;
     }
     @media (max-width: 700px){
-      .wrap{
-        max-width: 100%;
-        padding-left: 10px;
-        padding-right: 10px;
-      }
+      .wrap{ max-width: 100%; padding-left: 10px; padding-right: 10px; }
     }
 
     .topbar{
@@ -122,42 +108,34 @@
       backdrop-filter: blur(12px);
     }
     @media (prefers-color-scheme: dark){
-      .topbar{
-        background: rgba(11,18,32,.72);
-      }
+      .topbar{ background: rgba(11,18,32,.72); }
     }
     body.tg .topbar{
       background: color-mix(in srgb, var(--tg-theme-bg-color, #0b1220) 70%, transparent);
     }
 
+    /* ✅ هدر جدید:
+       - سمت راست: متن (تمام‌عرض و خوانا)
+       - سمت چپ: لوگو
+       - هیچ باکس اضافی سمت راست نداریم
+    */
     .brand{
       display:flex;
       align-items:center;
       justify-content:space-between;
       gap: 12px;
     }
-
-    .brandRight{
-      display:flex;
-      align-items:flex-start;
-      gap: 12px;
+    .brandText{
+      flex: 1 1 auto;
       min-width: 0;
+      text-align: right;
     }
-
-    .logo{
-      width: 42px;
-      height: 42px;
-      border-radius: 14px;
-      background: rgba(255,255,255,.06);
-      border: 1px solid var(--border);
+    .brandActions{
       display:flex;
       align-items:center;
-      justify-content:center;
-      overflow:hidden;
+      gap: 10px;
       flex: 0 0 auto;
-      box-shadow: 0 10px 20px rgba(0,0,0,.12);
     }
-    .logo img{ width: 100%; height: 100%; object-fit: cover; }
 
     .title{
       font-size: 22px;
@@ -168,32 +146,30 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 72vw;
     }
-
     .subtitle{
       margin-top: 6px;
       font-size: 13px;
       color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    .pill{
-      display:inline-flex;
-      align-items:center;
-      gap: 8px;
-      padding: 8px 12px;
-      border-radius: 999px;
+    .logo{
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.06);
       border: 1px solid var(--border);
-      background: rgba(255,255,255,.55);
-      color: var(--muted);
-      font-weight: 800;
-      font-size: 13px;
-      white-space: nowrap;
-      backdrop-filter: blur(10px);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:hidden;
+      flex: 0 0 auto;
+      box-shadow: 0 10px 20px rgba(0,0,0,.12);
     }
-    @media (prefers-color-scheme: dark){
-      .pill{ background: rgba(255,255,255,.05); }
-    }
+    .logo img{ width: 100%; height: 100%; object-fit: cover; display:block; }
 
     .btnGhost{
       border: 1px solid var(--border);
@@ -205,6 +181,7 @@
       font-family: inherit;
       font-weight: 900;
       backdrop-filter: blur(10px);
+      white-space: nowrap;
     }
     @media (prefers-color-scheme: dark){
       .btnGhost{ background: rgba(255,255,255,.04); }
@@ -273,6 +250,24 @@
       justify-content: space-between;
     }
 
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.55);
+      color: var(--muted);
+      font-weight: 800;
+      font-size: 13px;
+      white-space: nowrap;
+      backdrop-filter: blur(10px);
+    }
+    @media (prefers-color-scheme: dark){
+      .pill{ background: rgba(255,255,255,.05); }
+    }
+
     .select{
       border: 1px solid var(--border);
       background: rgba(255,255,255,.55);
@@ -314,7 +309,6 @@
       justify-content:space-between;
       gap: 12px;
     }
-
     .itemTitle{
       font-weight: 900;
       margin: 0 0 6px;
@@ -500,6 +494,7 @@
       font-weight: 900;
       line-height: 1.5;
     }
+
     .closeBtn{
       border: 1px solid var(--border);
       background: rgba(255,255,255,.50);
@@ -510,6 +505,7 @@
       font-family: inherit;
       font-weight: 900;
       backdrop-filter: blur(10px);
+      white-space: nowrap;
     }
     @media (prefers-color-scheme: dark){
       .closeBtn{ background: rgba(255,255,255,.04); }
@@ -533,7 +529,6 @@
     .muted{ color: var(--muted); }
     .hidden{ display:none !important; }
 
-    /* Admin upload inputs */
     .inp{
       width:100%;
       padding: 12px 12px;
@@ -564,18 +559,23 @@
 <body>
   <div class="wrap">
     <div class="topbar">
+      <!-- ✅ هدر جدید طبق خواسته شما -->
       <div class="brand">
-        <div class="brandRight">
-          <div class="logo" title="سیلانه سبز">
-            <img id="logoImg" alt="Seylaneh Sabz Logo" />
-          </div>
-          <div style="min-width:0;">
-            <h1 class="title">آکادمی سیلانه سبز</h1>
-            <div class="subtitle" id="tagline">یادگیری مستمر، مزیت رقابتی ما</div>
-          </div>
+        <!-- سمت راست: متن (تمام عرض) -->
+        <div class="brandText">
+          <h1 class="title">آکادمی سیلانه سبز</h1>
+          <div class="subtitle" id="tagline">یادگیری مستمر، مزیت رقابتی ما</div>
         </div>
 
-        <button id="btnChangeCategory" class="btnGhost hidden">تغییر دسته</button>
+        <!-- سمت چپ: لوگو + (اختیاری) دکمه تغییر دسته -->
+        <div class="brandActions">
+          <button id="btnChangeCategory" class="btnGhost hidden">تغییر دسته</button>
+
+          <!-- لوگو از فایل ریپو (logo-light.png) -->
+          <div class="logo" title="لوگو">
+            <img id="logoImg" src="logo-light.png" alt="Logo" />
+          </div>
+        </div>
       </div>
 
       <div id="controlsBlock" class="hidden">
@@ -663,7 +663,6 @@
 
       <div id="list" class="grid"></div>
     </div>
-
   </div>
 
   <div id="overlay" class="overlay" aria-hidden="true">
@@ -701,29 +700,7 @@
 ========================= */
 const SUPABASE_URL = "https://szjwrqzgiekjaggqsuoh.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_hkKIc6r7pSDCJsUvoOafrg_vK8xQc0F";
-
-/* ✅ Supabase client */
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-/* =========================
-   Logo (replace anytime)
-========================= */
-const LOGO_DATA_URI =
-  "data:image/svg+xml;utf8," +
-  encodeURIComponent(`
-  <svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
-    <defs>
-      <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0" stop-color="#22c55e"/>
-        <stop offset="1" stop-color="#60a5fa"/>
-      </linearGradient>
-    </defs>
-    <rect width="96" height="96" rx="24" fill="rgba(255,255,255,.06)"/>
-    <circle cx="48" cy="48" r="28" fill="url(#g)" opacity="0.95"/>
-    <path d="M57 34c-9 2-15 8-17 17-1 6 2 12 8 13 6 1 12-3 14-9 2-5 1-14-5-21z"
-          fill="rgba(7,16,35,.92)"/>
-    <path d="M41 57c6-6 12-10 19-12" stroke="rgba(7,16,35,.85)" stroke-width="3" stroke-linecap="round"/>
-  </svg>`);
 
 /* =========================
    Telegram
@@ -748,7 +725,6 @@ function resolveUserId() {
 
   return "web_preview";
 }
-
 const TELEGRAM_ID = resolveUserId();
 
 if (tg) {
@@ -775,18 +751,20 @@ function calcPercent(pos, duration){
 function show(el){ if(!el) return; el.hidden = false; el.classList.remove("hidden"); el.style.display = ""; }
 function hide(el){ if(!el) return; el.hidden = true; el.classList.add("hidden"); el.style.display = "none"; }
 
+let categoryGateEl = null;
+let categoryGateParent = null;
+let categoryGateNextSibling = null;
+
 function captureCategoryGate(){
   categoryGateEl = $("categoryGate");
   categoryGateParent = categoryGateEl ? categoryGateEl.parentNode : null;
   categoryGateNextSibling = categoryGateEl ? categoryGateEl.nextSibling : null;
 }
-
 function detachCategoryGate(){
   if(!categoryGateEl) captureCategoryGate();
   if(!categoryGateEl || !categoryGateEl.parentNode) return;
   categoryGateEl.parentNode.removeChild(categoryGateEl);
 }
-
 function attachCategoryGate(){
   if(!categoryGateEl) captureCategoryGate();
   if(!categoryGateEl || !categoryGateParent) return;
@@ -799,19 +777,15 @@ function attachCategoryGate(){
 }
 
 /* =========================
-   Supabase REST (for tables)
+   Supabase REST (tables)
 ========================= */
 async function sGet(path) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
-    headers: {
-      "apikey": SUPABASE_ANON_KEY,
-      "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-    }
+    headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` }
   });
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
-
 async function sPost(path, body, merge=false) {
   const headers = {
     "apikey": SUPABASE_ANON_KEY,
@@ -827,14 +801,10 @@ async function sPost(path, body, merge=false) {
   if (!res.ok) throw new Error(await res.text());
   return true;
 }
-
 async function sDelete(path) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
     method: "DELETE",
-    headers: {
-      "apikey": SUPABASE_ANON_KEY,
-      "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-    }
+    headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` }
   });
   if (!res.ok) throw new Error(await res.text());
   return true;
@@ -871,10 +841,6 @@ let CURRENT_CATEGORY = null;
 let TYPE_FILTER = "all";
 let SORT_MODE = "smart";
 
-let categoryGateEl = null;
-let categoryGateParent = null;
-let categoryGateNextSibling = null;
-
 let progressByContent = new Map();
 let engagementByContent = new Map();
 let likeCountByContent = new Map();
@@ -883,12 +849,7 @@ let likedByMe = new Set();
 let continueItem = null;
 
 /* =========================
-   UI init
-========================= */
-$("logoImg").src = LOGO_DATA_URI;
-
-/* =========================
-   Progress / Likes / Engagement loaders
+   Progress / Likes loaders
 ========================= */
 async function loadMyProgress(){
   const rows = await sGet(`progress?select=content_id,last_position_seconds,completion_percent,updated_at,duration_seconds&telegram_id=eq.${encodeURIComponent(TELEGRAM_ID)}&limit=5000`);
@@ -916,9 +877,8 @@ async function loadLikesForContents(contentIds){
   const inList = contentIds.join(",");
   const rowsAll = await sGet(`likes?select=content_id&content_id=in.(${inList})&limit=10000`);
   likeCountByContent = new Map();
-  rowsAll.forEach(r => {
-    likeCountByContent.set(r.content_id, (likeCountByContent.get(r.content_id) || 0) + 1);
-  });
+  rowsAll.forEach(r => likeCountByContent.set(r.content_id, (likeCountByContent.get(r.content_id) || 0) + 1));
+
   const rowsMe = await sGet(`likes?select=content_id&content_id=in.(${inList})&telegram_id=eq.${encodeURIComponent(TELEGRAM_ID)}&limit=5000`);
   likedByMe = new Set(rowsMe.map(r => r.content_id));
 }
@@ -935,9 +895,7 @@ async function toggleLike(contentId){
       likedByMe.add(contentId);
       likeCountByContent.set(contentId, (likeCountByContent.get(contentId)||0) + 1);
     }
-  }catch(e){
-    console.error(e);
-  }
+  }catch(e){ console.error(e); }
 }
 
 /* =========================
@@ -1035,7 +993,6 @@ function applyFiltersAndRender(){
   if (!CURRENT_CATEGORY) return;
 
   const q = ($("q").value || "").trim().toLowerCase();
-
   let items = ALL_CONTENTS.filter(c => getContentCategoryKey(c) === CURRENT_CATEGORY);
 
   if (!items.length){
@@ -1044,13 +1001,8 @@ function applyFiltersAndRender(){
     return;
   }
 
-  if (TYPE_FILTER !== "all"){
-    items = items.filter(x => x.type === TYPE_FILTER);
-  }
-
-  if (q){
-    items = items.filter(x => (x.title || "").toLowerCase().includes(q));
-  }
+  if (TYPE_FILTER !== "all") items = items.filter(x => x.type === TYPE_FILTER);
+  if (q) items = items.filter(x => (x.title || "").toLowerCase().includes(q));
 
   items.sort((a,b) => compareItems(a,b));
   renderItems(items);
@@ -1261,7 +1213,6 @@ async function openPlayer(content){
         updated_at: new Date().toISOString()
       }], true);
 
-      // listen_events برای گزارش اکسل
       try{
         await sPost("listen_events", [{
           telegram_id: TELEGRAM_ID,
@@ -1270,9 +1221,7 @@ async function openPlayer(content){
           position_seconds: pos,
           event_type: force ? "pause_or_end" : "progress"
         }], false);
-      }catch(e){
-        console.error(e);
-      }
+      }catch(e){ console.error(e); }
 
       progressByContent.set(content.id, {
         content_id: content.id,
@@ -1282,9 +1231,7 @@ async function openPlayer(content){
         duration_seconds: duration || 0
       });
       updateOverallProgress();
-    }catch(e){
-      console.error(e);
-    }
+    }catch(e){ console.error(e); }
   }
 
   media.addEventListener("timeupdate", () => {
@@ -1313,31 +1260,22 @@ function closePlayer(){
 }
 
 /* =========================
-   Admin Upload (ONLY ADMINS)
+   Admin Upload
 ========================= */
-const ADMIN_IDS = new Set([
-  "193158792",
-  "6545251601"
-]);
-
+const ADMIN_IDS = new Set(["193158792","6545251601"]);
 function isAdmin(){
-  // فقط داخل تلگرام اجازه بده (امن‌تر)
   if (!tg) return false;
   return ADMIN_IDS.has(String(TELEGRAM_ID));
 }
-
 function showUploadStatus(msg, isError=false){
   const el = $("upStatus");
   el.style.display = "block";
   el.style.color = isError ? "rgba(220,38,38,.95)" : "rgba(22,163,74,.95)";
   el.textContent = msg;
 }
-
-/* ✅ اسم فایل را امن و انگلیسی می‌کند تا 400 نخوری */
 function sanitizeFileName(name){
   const ext = (name.split(".").pop() || "").toLowerCase();
   const base = name.replace(/\.[^/.]+$/, "");
-
   const safeBase = base
     .normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -1345,19 +1283,14 @@ function sanitizeFileName(name){
     .replace(/_+/g, "_")
     .replace(/^_+|_+$/g, "")
     .slice(0, 80);
-
   return `${safeBase || "file"}_${Date.now()}.${ext || "bin"}`;
 }
-
-/* Duration from file (metadata) */
 function getDurationFromFile(file){
   return new Promise((resolve) => {
     if (!file) return resolve(null);
-
     const url = URL.createObjectURL(file);
     const isVideo = file.type.startsWith("video/");
     const el = document.createElement(isVideo ? "video" : "audio");
-
     let settled = false;
     const cleanup = (val) => {
       if (settled) return;
@@ -1365,21 +1298,17 @@ function getDurationFromFile(file){
       try { URL.revokeObjectURL(url); } catch(e){}
       resolve(val);
     };
-
     el.preload = "metadata";
     el.src = url;
-
     el.onloadedmetadata = () => {
       const d = Number(el.duration);
       if (Number.isFinite(d) && d > 0) cleanup(Math.floor(d));
       else cleanup(null);
     };
     el.onerror = () => cleanup(null);
-
     setTimeout(() => cleanup(null), 2500);
   });
 }
-
 function detectType(file){
   if (!file) return "audio";
   if (file.type.startsWith("video/")) return "video";
@@ -1388,12 +1317,9 @@ function detectType(file){
   if (name.endsWith(".mp4") || name.endsWith(".mov") || name.endsWith(".mkv")) return "video";
   return "audio";
 }
-
-/* ✅ آپلود حرفه‌ای با Supabase JS SDK (حل قطعی 400) */
 async function uploadToStorage(file){
   const safeName = sanitizeFileName(file.name || "file.bin");
   const path = `uploads/${safeName}`;
-
   const { data, error } = await supabase
     .storage
     .from("training-media")
@@ -1402,13 +1328,10 @@ async function uploadToStorage(file){
       contentType: file.type || "application/octet-stream",
       cacheControl: "3600"
     });
-
   if (error) throw new Error("Storage upload failed: " + error.message);
-
   const { data: pub } = supabase.storage.from("training-media").getPublicUrl(data.path);
   return { path: data.path, publicUrl: pub.publicUrl };
 }
-
 async function insertContentRow({title, type, category_key, file_url, duration_seconds}){
   await sPost("contents", [{
     title,
@@ -1419,11 +1342,9 @@ async function insertContentRow({title, type, category_key, file_url, duration_s
     created_at: new Date().toISOString()
   }], false);
 }
-
 function initAdminUpload(){
   const panel = $("adminUpload");
   if (!panel) return;
-
   if (isAdmin()) show(panel); else hide(panel);
 
   $("upFile")?.addEventListener("change", async () => {
@@ -1431,7 +1352,6 @@ function initAdminUpload(){
     $("upDurationManual").classList.add("hidden");
     $("upDurationManual").value = "";
     $("upDurationManual").dataset.auto = "";
-
     if (!file) return;
 
     $("upHint").textContent = "در حال استخراج مدت زمان از فایل...";
@@ -1457,12 +1377,9 @@ function initAdminUpload(){
       if (!file) return showUploadStatus("فایل را انتخاب کن.", true);
 
       let duration_seconds = Number($("upDurationManual").dataset.auto || 0);
-
       if (!duration_seconds || duration_seconds <= 0){
         const manual = Number(($("upDurationManual").value || "").trim());
-        if (!manual || manual <= 0) {
-          return showUploadStatus("مدت زمان مشخص نیست. عدد ثانیه را دستی وارد کن.", true);
-        }
+        if (!manual || manual <= 0) return showUploadStatus("مدت زمان مشخص نیست. عدد ثانیه را دستی وارد کن.", true);
         duration_seconds = Math.floor(manual);
       }
 
@@ -1472,11 +1389,7 @@ function initAdminUpload(){
       const { publicUrl } = await uploadToStorage(file);
 
       showUploadStatus("آپلود انجام شد. در حال ثبت در جدول contents...");
-      await insertContentRow({
-        title, type, category_key,
-        file_url: publicUrl,
-        duration_seconds
-      });
+      await insertContentRow({ title, type, category_key, file_url: publicUrl, duration_seconds });
 
       showUploadStatus("✅ ثبت شد. در حال ریفرش لیست...");
       await refreshAll();
@@ -1489,11 +1402,7 @@ function initAdminUpload(){
       $("upHint").textContent = "فایل را انتخاب کن؛ سیستم مدت را خودکار درمی‌آورد. اگر نشد، فیلد دستی فعال می‌شود.";
     }catch(e){
       console.error("UPLOAD/INSERT ERROR:", e);
-      const msg =
-        (typeof e === "string" ? e :
-        (e?.message ? e.message :
-        JSON.stringify(e, null, 2)));
-
+      const msg = (e?.message ? e.message : String(e));
       showUploadStatus("❌ خطای واقعی: " + msg, true);
     }
   });
@@ -1513,7 +1422,7 @@ async function refreshAll(){
 }
 
 /* =========================
-   Start
+   Boot
 ========================= */
 (async () => {
   try{
@@ -1527,17 +1436,11 @@ async function refreshAll(){
         .filter(c => getContentCategoryKey(c) === key)
         .map(c => c.id);
 
-      try{
-        await loadLikesForContents(ids);
-      }catch(e){ console.error(e); likeCountByContent = new Map(); likedByMe = new Set(); }
-
-      try{
-        await loadEngagementAllUsers(ids);
-      }catch(e){ console.error(e); engagementByContent = new Map(); }
+      try{ await loadLikesForContents(ids); } catch(e){ console.error(e); }
+      try{ await loadEngagementAllUsers(ids); } catch(e){ console.error(e); }
 
       _selectCategory(key);
     };
-
   }catch(e){
     console.error(e);
     $("catGrid").innerHTML = `<div class="card empty">خطا در بارگذاری. تنظیمات Supabase یا جدول‌ها را بررسی کنید.</div>`;
