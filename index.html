@@ -5,9 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>آکادمی سیلانه سبز</title>
 
-  
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap" rel="stylesheet">
 
@@ -317,7 +316,6 @@
       text-align:left;
     }
 
-    /* Category gate */
     .catGrid{
       margin-top: 14px;
       display:grid;
@@ -348,7 +346,6 @@
       line-height: 1.6;
     }
 
-    /* Continue watching + summary */
     .row2{
       margin-top: 12px;
       display:grid;
@@ -391,7 +388,6 @@
       color: var(--muted);
     }
 
-    /* Player modal (focus mode) */
     .overlay{
       position: fixed;
       inset: 0;
@@ -450,7 +446,7 @@
       font-size: 13px;
       line-height: 1.7;
     }
-/* Small helpers */
+
     .muted{ color: var(--muted); }
     .hidden{ display:none !important; }
   </style>
@@ -473,7 +469,6 @@
         <button id="btnChangeCategory" class="btnGhost hidden">تغییر دسته</button>
       </div>
 
-      <!-- Controls only shown after category selection -->
       <div id="controlsBlock" class="hidden">
         <div class="controls">
           <input id="q" class="search" placeholder="جستجو در آموزش‌ها (مثلاً: فروش، محصول، ...)" />
@@ -496,7 +491,6 @@
       </div>
     </div>
 
-    <!-- Category gate -->
     <div id="categoryGate">
       <div style="display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap; margin-top:12px;">
         <div class="pill" style="border-radius:999px;">
@@ -515,10 +509,7 @@
       <div class="catGrid" id="catGrid"></div>
     </div>
 
-    <!-- Content list -->
     <div id="listArea" class="hidden">
-      
-      
       <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:12px;">
         <div class="pill">
           پیشرفت این دسته:
@@ -532,13 +523,11 @@
         </div>
       </div>
 
-
       <div id="list" class="grid"></div>
     </div>
 
   </div>
 
-  <!-- Player modal (focus mode) -->
   <div id="overlay" class="overlay" aria-hidden="true">
     <div class="playerModal">
       <div class="playerHead">
@@ -568,8 +557,6 @@
     </div>
   </div>
 
-</div>
-
 <script>
 /* =========================
    CONFIG (Supabase)
@@ -579,7 +566,6 @@ const SUPABASE_ANON_KEY = "sb_publishable_hkKIc6r7pSDCJsUvoOafrg_vK8xQc0F";
 
 /* =========================
    Logo (replace anytime)
-   - replace LOGO_DATA_URI with your real logo data-uri or a public URL.
 ========================= */
 const LOGO_DATA_URI =
   "data:image/svg+xml;utf8," +
@@ -598,14 +584,12 @@ const LOGO_DATA_URI =
     <path d="M41 57c6-6 12-10 19-12" stroke="rgba(7,16,35,.85)" stroke-width="3" stroke-linecap="round"/>
   </svg>`);
 
-
 /* =========================
    Telegram
 ========================= */
 const tg = window.Telegram?.WebApp;
 
 function resolveUserId() {
-  // Preferred: real Telegram user id inside Telegram Mini App
   try {
     if (tg) {
       tg.ready();
@@ -614,7 +598,6 @@ function resolveUserId() {
     }
   } catch (e) {}
 
-  // Fallbacks for web-preview/testing (so UI still renders)
   const qs = new URLSearchParams(location.search);
   const qid = qs.get("uid");
   if (qid) return String(qid);
@@ -622,7 +605,6 @@ function resolveUserId() {
   const saved = localStorage.getItem("dev_uid");
   if (saved) return saved;
 
-  // Last resort: stable anonymous id for preview
   return "web_preview";
 }
 
@@ -632,7 +614,6 @@ if (tg) {
   document.body.classList.add("tg");
   try { tg.expand(); } catch(e){}
 }
-
 
 /* =========================
    Helpers
@@ -668,7 +649,7 @@ function detachCategoryGate(){
 function attachCategoryGate(){
   if(!categoryGateEl) captureCategoryGate();
   if(!categoryGateEl || !categoryGateParent) return;
-  if(categoryGateEl.parentNode) return; // already attached
+  if(categoryGateEl.parentNode) return;
   if(categoryGateNextSibling && categoryGateNextSibling.parentNode === categoryGateParent){
     categoryGateParent.insertBefore(categoryGateEl, categoryGateNextSibling);
   }else{
@@ -719,7 +700,7 @@ async function sDelete(path) {
 }
 
 /* =========================
-   Categories (fixed)
+   Categories
 ========================= */
 const CATEGORIES = [
   { key: "sales",  title: "آموزش فروش",   desc: "مهارت‌های مذاکره، پیگیری، بستن فروش" },
@@ -746,19 +727,17 @@ function renderCategories(){
 ========================= */
 let ALL_CONTENTS = [];
 let CURRENT_CATEGORY = null;
-let TYPE_FILTER = "all";     // all | audio | video
-let SORT_MODE = "smart";     // smart | newest | liked | engaging
+let TYPE_FILTER = "all";
+let SORT_MODE = "smart";
 
 let categoryGateEl = null;
 let categoryGateParent = null;
 let categoryGateNextSibling = null;
 
-let userProfile = null;
-
-let progressByContent = new Map();     // content_id -> {last_position_seconds, completion_percent, updated_at, duration_seconds}
-let engagementByContent = new Map();   // content_id -> total active_seconds (all users)
-let likeCountByContent = new Map();    // content_id -> count
-let likedByMe = new Set();             // content_id
+let progressByContent = new Map();
+let engagementByContent = new Map();
+let likeCountByContent = new Map();
+let likedByMe = new Set();
 
 let continueItem = null;
 
@@ -768,20 +747,8 @@ let continueItem = null;
 $("logoImg").src = LOGO_DATA_URI;
 
 /* =========================
-   Telegram Profile (no onboarding)
-========================= */
-function getTelegramProfile(){
-  const u = tg?.initDataUnsafe?.user;
-  if(!u) return { full_name: null, username: null };
-  const full_name = [u.first_name, u.last_name].filter(Boolean).join(" ").trim() || null;
-  const username = u.username ? String(u.username) : null;
-  return { full_name, username };
-}
-
-/* =========================
    Progress / Likes / Engagement loaders
 ========================= */
-
 async function loadMyProgress(){
   const rows = await sGet(`progress?select=content_id,last_position_seconds,completion_percent,updated_at,duration_seconds&telegram_id=eq.${encodeURIComponent(TELEGRAM_ID)}&limit=5000`);
   progressByContent = new Map();
@@ -789,11 +756,7 @@ async function loadMyProgress(){
 }
 
 async function loadEngagementAllUsers(contentIds){
-  // جذاب‌ترین محتوا: مجموع active_seconds همه کاربران روی هر محتوا
-  // برای MVP: تمام progress ها برای این محتواها را می‌گیریم و JS جمع می‌زند.
-  // اگر دیتات زیاد شد، بعداً با یک View/RPC بهینه می‌کنیم.
   if (!contentIds.length) { engagementByContent = new Map(); return; }
-
   const inList = contentIds.join(",");
   const rows = await sGet(`progress?select=content_id,active_seconds&content_id=in.(${inList})&limit=10000`);
   engagementByContent = new Map();
@@ -810,13 +773,11 @@ async function loadLikesForContents(contentIds){
     return;
   }
   const inList = contentIds.join(",");
-  // همه لایک‌ها برای شمارش
   const rowsAll = await sGet(`likes?select=content_id&content_id=in.(${inList})&limit=10000`);
   likeCountByContent = new Map();
   rowsAll.forEach(r => {
     likeCountByContent.set(r.content_id, (likeCountByContent.get(r.content_id) || 0) + 1);
   });
-  // لایک‌های خودم برای حالت liked
   const rowsMe = await sGet(`likes?select=content_id&content_id=in.(${inList})&telegram_id=eq.${encodeURIComponent(TELEGRAM_ID)}&limit=5000`);
   likedByMe = new Set(rowsMe.map(r => r.content_id));
 }
@@ -877,7 +838,6 @@ function selectCategory(key){
   const catObj = CATEGORIES.find(x => x.key === key);
   $("catPill").textContent = catObj ? `دسته: ${catObj.title}` : "—";
 
-  // micro copy
   const lines = [
     "یادگیری مستمر، مزیت رقابتی ماست.",
     "هر قدم کوچک، یک عادت بزرگ می‌سازد.",
@@ -894,12 +854,10 @@ $("btnChangeCategory").onclick = () => {
   hide($("controlsBlock"));
   hide($("btnChangeCategory"));
 
-  // bring category gate back (hard attach) and re-render categories (safe)
   attachCategoryGate();
   show($("categoryGate"));
   renderCategories();
 
-  // reset filters/search for a clean start
   $("q").value = "";
   setType("all");
   $("sortSel").value = "smart";
@@ -929,8 +887,6 @@ function setType(t){
 function contentTypeLabel(t){ return t === "audio" ? "پادکست" : "ویدیو"; }
 
 function getContentCategoryKey(c){
-  // محتوا باید ستون category_key داشته باشد. اگر نداره، "other"
-  // ما فقط 5 دسته داریم؛ هرچی غیر از این‌ها "other" می‌شود.
   const k = (c.category_key || "").trim();
   if (CATEGORIES.some(x => x.key === k)) return k;
   return "other";
@@ -941,35 +897,25 @@ function applyFiltersAndRender(){
 
   const q = ($("q").value || "").trim().toLowerCase();
 
-  // 1) category filter
-  let items = ALL_CONTENTS.filter(c => {
-    const k = getContentCategoryKey(c);
-    return k === CURRENT_CATEGORY;
-  });
+  let items = ALL_CONTENTS.filter(c => getContentCategoryKey(c) === CURRENT_CATEGORY);
 
-  // اگر دسته انتخاب شد ولی چیزی نبود، یک پیام
   if (!items.length){
     $("list").innerHTML = `<div class="card empty">در این دسته هنوز محتوایی ثبت نشده.</div>`;
-    updateCategoryProgress(items);
+    updateCategoryProgress();
     return;
   }
 
-  // 2) type filter
   if (TYPE_FILTER !== "all"){
     items = items.filter(x => x.type === TYPE_FILTER);
   }
 
-  // 3) search
   if (q){
     items = items.filter(x => (x.title || "").toLowerCase().includes(q));
   }
 
-  // 4) compute per-item derived: progress, likes, remaining, engagement
-  // 5) sort
   items.sort((a,b) => compareItems(a,b));
-
   renderItems(items);
-  updateCategoryProgress(items);
+  updateCategoryProgress();
 }
 
 function compareItems(a,b){
@@ -991,26 +937,14 @@ function compareItems(a,b){
   const createdA = a.created_at ? new Date(a.created_at).getTime() : a.id;
   const createdB = b.created_at ? new Date(b.created_at).getTime() : b.id;
 
-  // sort modes
-  if (SORT_MODE === "newest"){
-    return createdB - createdA;
-  }
-  if (SORT_MODE === "liked"){
-    return (likesB - likesA) || (createdB - createdA);
-  }
-  if (SORT_MODE === "engaging"){
-    return (engB - engA) || (createdB - createdA);
-  }
+  if (SORT_MODE === "newest") return createdB - createdA;
+  if (SORT_MODE === "liked") return (likesB - likesA) || (createdB - createdA);
+  if (SORT_MODE === "engaging") return (engB - engA) || (createdB - createdA);
 
-  // smart default:
-  // 1) incomplete on top
   if (incompleteA !== incompleteB) return incompleteA ? -1 : 1;
-  // 2) within incomplete: higher remaining? (actually we want closer to finish? let's do lower pct first? no, show closer to finish to complete)
   if (incompleteA && incompleteB) {
-    // show higher pct first to encourage completion
     if (pctA !== pctB) return pctB - pctA;
   }
-  // 3) newest next
   return createdB - createdA;
 }
 
@@ -1021,7 +955,6 @@ function renderItems(items){
   items.forEach(item => {
     const p = progressByContent.get(item.id);
     const pct = Number(p?.completion_percent || 0);
-    const lastPos = Number(p?.last_position_seconds || 0);
     const duration = Number(item.duration_seconds || 0);
 
     const likeCount = likeCountByContent.get(item.id) || 0;
@@ -1055,13 +988,10 @@ function renderItems(items){
       </div>
     `;
 
-    // handlers
     card.querySelector(`[data-play="${item.id}"]`).onclick = () => openPlayer(item);
     card.querySelector(`[data-like="${item.id}"]`).onclick = async () => {
       await toggleLike(item.id);
-      // update this card like UI immediately
       applyFiltersAndRender();
-      // if player open on same content, update likes label
       if (currentPlayerContent && currentPlayerContent.id === item.id){
         $("nowLikes").textContent = `♡ ${likeCountByContent.get(item.id) || 0}`;
       }
@@ -1074,9 +1004,7 @@ function renderItems(items){
 /* =========================
    Progress summaries
 ========================= */
-function updateCategoryProgress(itemsInView){
-  // پیشرفت در دسته: میانگین completion روی کل محتواهای دسته (حتی اگر فیلتر نوع فعال باشد)
-  // برای اینکه منصف باشد، روی کل محتواهای دسته حساب می‌کنیم نه فقط view.
+function updateCategoryProgress(){
   const allInCat = ALL_CONTENTS.filter(c => getContentCategoryKey(c) === CURRENT_CATEGORY);
   if (!allInCat.length){
     $("catProgress").textContent = "0%";
@@ -1084,9 +1012,7 @@ function updateCategoryProgress(itemsInView){
     return;
   }
   let sum = 0;
-  allInCat.forEach(c => {
-    sum += Number(progressByContent.get(c.id)?.completion_percent || 0);
-  });
+  allInCat.forEach(c => sum += Number(progressByContent.get(c.id)?.completion_percent || 0));
   const avg = sum / allInCat.length;
   $("catProgress").textContent = `${avg.toFixed(0)}%`;
   $("catProgressHint").textContent = `${allInCat.length} آموزش در این دسته`;
@@ -1104,20 +1030,16 @@ function updateOverallProgress(){
 }
 
 /* =========================
-   Player (no download, no last point label)
+   Player
 ========================= */
 let currentPlayerContent = null;
-let progressTimer = null;
 
 $("btnClose").onclick = closePlayer;
 $("btnFullscreen").onclick = () => {
   const v = $("playerArea").querySelector("video");
   if (!v) return;
-  // Standard fullscreen
   if (v.requestFullscreen) return v.requestFullscreen();
-  // Safari iOS fallback
   if (v.webkitEnterFullscreen) return v.webkitEnterFullscreen();
-  // Older WebKit
   if (v.webkitRequestFullscreen) return v.webkitRequestFullscreen();
 };
 $("overlay").addEventListener("click", (e) => {
@@ -1135,7 +1057,6 @@ function setMotivationLine(pct){
 async function openPlayer(content){
   currentPlayerContent = content;
 
-  // UI header
   $("nowTitle").textContent = content.title;
   $("nowType").textContent = contentTypeLabel(content.type);
   $("nowDuration").textContent = `مدت ${secondsToMin(content.duration_seconds || 0)}`;
@@ -1143,33 +1064,26 @@ async function openPlayer(content){
   const likes = likeCountByContent.get(content.id) || 0;
   $("nowLikes").textContent = `♡ ${likes}`;
 
-  // build media
   const area = $("playerArea");
   area.innerHTML = "";
 
   const isVideo = content.type === "video";
-  // Fullscreen button only for videos
   if (isVideo) show($("btnFullscreen")); else hide($("btnFullscreen"));
+
   const media = document.createElement(isVideo ? "video" : "audio");
   media.controls = true;
   media.src = content.file_path;
 
-  // disable download as much as possible
   media.setAttribute("controlsList", "nodownload noplaybackrate");
   media.setAttribute("disablePictureInPicture", "true");
   media.oncontextmenu = () => false;
-  if (isVideo) {
-    // Allow fullscreen on mobile (especially iOS): do NOT force inline playback
-    media.playsInline = false;
-  }
+  if (isVideo) media.playsInline = false;
 
   area.appendChild(media);
 
-  // show modal
   $("overlay").classList.add("show");
   $("overlay").setAttribute("aria-hidden", "false");
 
-  // resume silently
   const p = progressByContent.get(content.id);
   const lastPos = Number(p?.last_position_seconds || 0);
   const duration = Number(content.duration_seconds || 0);
@@ -1189,7 +1103,6 @@ async function openPlayer(content){
     updateUI(media.currentTime);
   });
 
-  // track progress every 10 seconds + on pause/end
   let lastSentAt = 0;
 
   async function saveNow(force=false){
@@ -1197,7 +1110,6 @@ async function openPlayer(content){
     const pct = calcPercent(pos, duration);
     updateUI(media.currentTime);
 
-    // ذخیره
     try{
       await sPost("progress", [{
         telegram_id: TELEGRAM_ID,
@@ -1206,11 +1118,24 @@ async function openPlayer(content){
         max_position_seconds: pos,
         duration_seconds: duration || 0,
         completion_percent: Number(pct.toFixed(2)),
-        active_seconds: pos, // MVP ساده (اگر خواستی دقیق‌تر کنیم، بعداً)
+        active_seconds: pos,
         updated_at: new Date().toISOString()
       }], true);
 
-      // cache update
+      // ثبت رویداد شنیدن/دیدن (برای گزارش اکسل)
+      // هر ذخیره پیشرفت یک event هم می‌سازد
+      try{
+        await sPost("listen_events", [{
+          telegram_id: TELEGRAM_ID,
+          content_id: content.id,
+          event_time: new Date().toISOString(),
+          position_seconds: pos,
+          event_type: force ? "pause_or_end" : "progress"
+        }], false);
+      }catch(e){
+        console.error(e);
+      }
+
       progressByContent.set(content.id, {
         content_id: content.id,
         last_position_seconds: pos,
@@ -1238,11 +1163,7 @@ async function openPlayer(content){
     saveNow(true);
   });
 
-  // initial UI
   updateUI(lastPos);
-
-  // subtle: stop any previous timer
-  if (progressTimer) clearInterval(progressTimer);
 }
 
 function closePlayer(){
@@ -1250,9 +1171,6 @@ function closePlayer(){
   $("overlay").classList.remove("show");
   $("overlay").setAttribute("aria-hidden", "true");
   currentPlayerContent = null;
-  if (progressTimer) clearInterval(progressTimer);
-  progressTimer = null;
-  // refresh list UI (percent updates)
   if (CURRENT_CATEGORY) applyFiltersAndRender();
 }
 
@@ -1260,43 +1178,12 @@ function closePlayer(){
    Refresh All
 ========================= */
 async function refreshAll(){
-  // 1) Telegram profile (no onboarding)
-  userProfile = getTelegramProfile();
-
-  // Optional: store what we can in users table (no blocking UI)
-  // NOTE: mobile/job_title are not available from Telegram Mini App.
-  try{
-    await sPost("users", [{
-      telegram_id: TELEGRAM_ID,
-      full_name: userProfile?.full_name,
-      job_title: null,
-      mobile: null,
-      department: null,
-      updated_at: new Date().toISOString()
-    }], true);
-  }catch(e){ /* ignore */ }
-
-
-  // 2) load contents
-  // IMPORTANT: contents table needs columns: category_key, created_at
-  // If created_at is missing, we fallback to id sorting.
   ALL_CONTENTS = await sGet("contents?select=id,title,type,duration_seconds,file_path,category_key,created_at&order=id.desc&limit=5000");
-
-  // 3) load my progress
   await loadMyProgress();
-
-  // 4) continue watching
   continueItem = await loadContinueWatching();
   updateContinueUI();
-
-  // 5) overall progress
   updateOverallProgress();
-
-  // 6) categories UI
   renderCategories();
-
-  // 7) precompute likes + engagement for current category when chosen
-  // (we compute on demand inside selectCategory)
 }
 
 /* =========================
@@ -1306,18 +1193,14 @@ async function refreshAll(){
   try{
     await refreshAll();
 
-    // attach after category selection:
-    // whenever category changes, reload likes+engagement for that category contents
     const _selectCategory = selectCategory;
     selectCategory = async (key) => {
       CURRENT_CATEGORY = key;
 
-      // for this category, get ids
       const ids = ALL_CONTENTS
         .filter(c => getContentCategoryKey(c) === key)
         .map(c => c.id);
 
-      // load likes + engagement for these ids (for sorting)
       try{
         await loadLikesForContents(ids);
       }catch(e){ console.error(e); likeCountByContent = new Map(); likedByMe = new Set(); }
@@ -1326,13 +1209,11 @@ async function refreshAll(){
         await loadEngagementAllUsers(ids);
       }catch(e){ console.error(e); engagementByContent = new Map(); }
 
-      // now call original select
       _selectCategory(key);
     };
 
   }catch(e){
     console.error(e);
-    // minimal fail UI
     $("catGrid").innerHTML = `<div class="card empty">خطا در بارگذاری. تنظیمات Supabase یا جدول‌ها را بررسی کنید.</div>`;
   }
 })();
