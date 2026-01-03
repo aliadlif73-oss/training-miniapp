@@ -346,34 +346,6 @@
       line-height: 1.6;
     }
 
-    .row2{
-      margin-top: 12px;
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-    @media (max-width: 860px){
-      .row2{ grid-template-columns: 1fr; }
-    }
-    .bigStat{
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap: 10px;
-    }
-    .bigStat h3{
-      margin:0;
-      font-size: 14px;
-      font-weight: 900;
-      color: var(--muted);
-    }
-    .bigStat .value{
-      margin-top: 8px;
-      font-size: 22px;
-      font-weight: 900;
-      letter-spacing: -0.3px;
-    }
-
     .hint{
       margin-top: 10px;
       color: var(--muted);
@@ -449,6 +421,27 @@
 
     .muted{ color: var(--muted); }
     .hidden{ display:none !important; }
+
+    /* Admin upload inputs */
+    .inp{
+      width:100%;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      outline:none;
+      font-family: inherit;
+      font-weight: 700;
+    }
+    .formGrid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    @media (max-width: 560px){
+      .formGrid{ grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 
@@ -504,6 +497,35 @@
         </button>
 
         <div id="continueHint" class="hint" style="margin:0; flex-basis:100%; display:none;"></div>
+      </div>
+
+      <!-- Admin Upload Panel -->
+      <div id="adminUpload" class="card hidden" style="margin-top:12px;">
+        <div class="itemTitle" style="margin-bottom:8px;">آپلود محتوا (ادمین)</div>
+
+        <div class="formGrid">
+          <input id="upTitle" class="inp" placeholder="عنوان محتوا" />
+          <select id="upCategory" class="select" style="min-width:auto;">
+            <option value="sales">آموزش فروش</option>
+            <option value="product">آموزش محصول</option>
+            <option value="mindset">نگرشی</option>
+            <option value="campaign">آموزش کمپین</option>
+            <option value="book">خلاصه کتاب</option>
+          </select>
+
+          <input id="upFile" type="file" class="inp" />
+          <input id="upDurationManual" class="inp hidden" placeholder="مدت زمان (ثانیه) - دستی وارد کن" inputmode="numeric" />
+        </div>
+
+        <div class="hint" id="upHint" style="margin-top:10px;">
+          فایل را انتخاب کن؛ سیستم مدت را خودکار درمی‌آورد. اگر نشد، فیلد دستی فعال می‌شود.
+        </div>
+
+        <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:12px;">
+          <button id="btnUpload" class="btnPrimary">آپلود و ثبت</button>
+        </div>
+
+        <div class="hint" id="upStatus" style="margin-top:10px; display:none;"></div>
       </div>
 
       <div class="catGrid" id="catGrid"></div>
@@ -631,8 +653,8 @@ function calcPercent(pos, duration){
   if (!duration || duration <= 0) return 0;
   return clamp((pos / duration) * 100, 0, 100);
 }
-function show(el){ if(!el) return; el.hidden = false; el.classList.remove("hidden"); el.style.display = ""; el.style.visibility=""; el.style.height=""; el.style.maxHeight=""; el.style.overflow=""; el.style.pointerEvents=""; }
-function hide(el){ if(!el) return; el.hidden = true; el.classList.add("hidden"); el.style.display = "none"; el.style.visibility="hidden"; el.style.height="0"; el.style.maxHeight="0"; el.style.overflow="hidden"; el.style.pointerEvents="none"; }
+function show(el){ if(!el) return; el.hidden = false; el.classList.remove("hidden"); el.style.display = ""; }
+function hide(el){ if(!el) return; el.hidden = true; el.classList.add("hidden"); el.style.display = "none"; }
 
 function captureCategoryGate(){
   categoryGateEl = $("categoryGate");
@@ -814,13 +836,11 @@ async function loadContinueWatching(){
 function updateContinueUI(){
   if (!continueItem){
     $("continueTitle").textContent = "—";
-    $("continueHint").textContent = "آخرین آموزشی که نیمه‌کاره مانده اینجا می‌آید.";
     $("btnContinue").disabled = true;
     return;
   }
   const {content, progress} = continueItem;
   $("continueTitle").textContent = content.title.length > 18 ? content.title.slice(0,18) + "…" : content.title;
-  $("continueHint").textContent = `پیشرفت: ${Number(progress.completion_percent||0).toFixed(0)}%`;
   $("btnContinue").disabled = false;
   $("btnContinue").onclick = () => openPlayer(content);
 }
@@ -1122,8 +1142,7 @@ async function openPlayer(content){
         updated_at: new Date().toISOString()
       }], true);
 
-      // ثبت رویداد شنیدن/دیدن (برای گزارش اکسل)
-      // هر ذخیره پیشرفت یک event هم می‌سازد
+      // listen_events برای گزارش اکسل
       try{
         await sPost("listen_events", [{
           telegram_id: TELEGRAM_ID,
@@ -1175,6 +1194,172 @@ function closePlayer(){
 }
 
 /* =========================
+   Admin Upload (Pro: auto duration, fallback manual)
+========================= */
+// فقط telegram_id هایی که اینجا می‌گذاری پنل آپلود را می‌بینند
+const ADMIN_IDS = new Set([
+  // "123456789"
+]);
+
+function isAdmin(){
+  return ADMIN_IDS.has(String(TELEGRAM_ID));
+}
+
+function showUploadStatus(msg, isError=false){
+  const el = $("upStatus");
+  el.style.display = "block";
+  el.style.color = isError ? "rgba(239,68,68,.95)" : "rgba(34,197,94,.95)";
+  el.textContent = msg;
+}
+
+function getDurationFromFile(file){
+  return new Promise((resolve) => {
+    if (!file) return resolve(null);
+
+    const url = URL.createObjectURL(file);
+    const isVideo = file.type.startsWith("video/");
+    const el = document.createElement(isVideo ? "video" : "audio");
+
+    let settled = false;
+    const cleanup = (val) => {
+      if (settled) return;
+      settled = true;
+      try { URL.revokeObjectURL(url); } catch(e){}
+      resolve(val);
+    };
+
+    el.preload = "metadata";
+    el.src = url;
+
+    el.onloadedmetadata = () => {
+      const d = Number(el.duration);
+      if (Number.isFinite(d) && d > 0) cleanup(Math.floor(d));
+      else cleanup(null);
+    };
+    el.onerror = () => cleanup(null);
+
+    // fallback timeout برای webview
+    setTimeout(() => cleanup(null), 2500);
+  });
+}
+
+function detectType(file){
+  if (!file) return "audio";
+  if (file.type.startsWith("video/")) return "video";
+  if (file.type.startsWith("audio/")) return "audio";
+  const name = (file.name || "").toLowerCase();
+  if (name.endsWith(".mp4") || name.endsWith(".mov") || name.endsWith(".mkv")) return "video";
+  return "audio";
+}
+
+async function uploadToStorage(file){
+  const safeName = (file.name || "file").replace(/\s+/g, "_");
+  const path = `uploads/${Date.now()}_${safeName}`;
+  const url = `${SUPABASE_URL}/storage/v1/object/training-media/${encodeURIComponent(path)}`;
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "apikey": SUPABASE_ANON_KEY,
+      "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+      "Content-Type": file.type || "application/octet-stream",
+      "x-upsert": "true",
+    },
+    body: file
+  });
+
+  if (!res.ok) throw new Error(await res.text());
+
+  const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/training-media/${path}`;
+  return { path, publicUrl };
+}
+
+async function insertContentRow({title, type, category_key, file_url, duration_seconds}){
+  await sPost("contents", [{
+    title,
+    type,
+    category_key,
+    file_path: file_url,
+    duration_seconds: Number(duration_seconds) || 0,
+    created_at: new Date().toISOString()
+  }], false);
+}
+
+function initAdminUpload(){
+  const panel = $("adminUpload");
+  if (!panel) return;
+
+  if (isAdmin()) show(panel); else hide(panel);
+
+  $("upFile")?.addEventListener("change", async () => {
+    const file = $("upFile").files?.[0];
+    $("upDurationManual").classList.add("hidden");
+    $("upDurationManual").value = "";
+    $("upDurationManual").dataset.auto = "";
+
+    if (!file) return;
+
+    $("upHint").textContent = "در حال استخراج مدت زمان از فایل...";
+    const dur = await getDurationFromFile(file);
+
+    if (dur && dur > 0){
+      $("upHint").textContent = `مدت زمان شناسایی شد: ${dur} ثانیه`;
+      $("upDurationManual").classList.add("hidden");
+      $("upDurationManual").dataset.auto = String(dur);
+    } else {
+      $("upHint").textContent = "مدت زمان از فایل قابل استخراج نبود. لطفاً مدت را دستی (ثانیه) وارد کن.";
+      $("upDurationManual").classList.remove("hidden");
+    }
+  }, { passive: true });
+
+  $("btnUpload")?.addEventListener("click", async () => {
+    try{
+      const title = ($("upTitle").value || "").trim();
+      const category_key = $("upCategory").value;
+      const file = $("upFile").files?.[0];
+
+      if (!title) return showUploadStatus("عنوان را وارد کن.", true);
+      if (!file) return showUploadStatus("فایل را انتخاب کن.", true);
+
+      let duration_seconds = Number($("upDurationManual").dataset.auto || 0);
+
+      if (!duration_seconds || duration_seconds <= 0){
+        const manual = Number(($("upDurationManual").value || "").trim());
+        if (!manual || manual <= 0) {
+          return showUploadStatus("مدت زمان مشخص نیست. عدد ثانیه را دستی وارد کن.", true);
+        }
+        duration_seconds = Math.floor(manual);
+      }
+
+      const type = detectType(file);
+
+      showUploadStatus("در حال آپلود فایل به Storage...");
+      const { publicUrl } = await uploadToStorage(file);
+
+      showUploadStatus("آپلود انجام شد. در حال ثبت در جدول contents...");
+      await insertContentRow({
+        title, type, category_key,
+        file_url: publicUrl,
+        duration_seconds
+      });
+
+      showUploadStatus("✅ ثبت شد. در حال ریفرش لیست...");
+      await refreshAll();
+
+      $("upTitle").value = "";
+      $("upFile").value = "";
+      $("upDurationManual").value = "";
+      $("upDurationManual").dataset.auto = "";
+      $("upDurationManual").classList.add("hidden");
+      $("upHint").textContent = "فایل را انتخاب کن؛ سیستم مدت را خودکار درمی‌آورد. اگر نشد، فیلد دستی فعال می‌شود.";
+    }catch(e){
+      console.error(e);
+      showUploadStatus("خطا در آپلود/ثبت. Policy های Storage یا RLS را چک کن.", true);
+    }
+  });
+}
+
+/* =========================
    Refresh All
 ========================= */
 async function refreshAll(){
@@ -1184,6 +1369,7 @@ async function refreshAll(){
   updateContinueUI();
   updateOverallProgress();
   renderCategories();
+  initAdminUpload();
 }
 
 /* =========================
