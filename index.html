@@ -6,57 +6,128 @@
   <title>آکادمی سیلانه سبز</title>
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!-- ✅ Supabase JS (UMD) برای آپلود استاندارد و بدون خطای 400 -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.min.js"></script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap" rel="stylesheet">
 
   <style>
+    /* =========================
+       Theme vars (Light/Dark safe)
+    ========================= */
     :root{
-      --bg:#0b1220;
-      --card:#0f172a;
-      --text:#e5e7eb;
-      --muted:#9ca3af;
-      --border: rgba(229,231,235,.10);
-      --shadow: 0 10px 26px rgba(0,0,0,.35);
-      --primary:#60a5fa;
-      --primary-weak: rgba(96,165,250,.14);
-      --success:#22c55e;
-      --danger:#ef4444;
+      --page-max: 980px;
+      --page-pad: 16px;
+
+      /* Light defaults (خوانا) */
+      --bg: #f5f7fb;
+      --card: rgba(255,255,255,.92);
+      --text: #0b1220;
+      --muted: #4b5563;
+      --border: rgba(15,23,42,.10);
+      --shadow: 0 10px 26px rgba(15,23,42,.10);
+      --primary: #2563eb;
+      --primary-weak: rgba(37,99,235,.12);
+      --success:#16a34a;
+      --danger:#dc2626;
+
       --radius: 18px;
+      --page-radius: 26px;
     }
 
-    body.tg {
-      --bg: var(--tg-theme-bg-color, #0b1220);
-      --card: var(--tg-theme-secondary-bg-color, #0f172a);
-      --text: var(--tg-theme-text-color, #e5e7eb);
-      --muted: var(--tg-theme-hint-color, #9ca3af);
-      --primary: var(--tg-theme-button-color, #60a5fa);
+    /* ✅ Dark mode palette */
+    @media (prefers-color-scheme: dark){
+      :root{
+        --bg:#0b1220;
+        --card: rgba(15,23,42,.82);
+        --text:#e5e7eb;
+        --muted:#9ca3af;
+        --border: rgba(229,231,235,.10);
+        --shadow: 0 10px 26px rgba(0,0,0,.35);
+        --primary:#60a5fa;
+        --primary-weak: rgba(96,165,250,.14);
+        --success:#22c55e;
+        --danger:#ef4444;
+      }
+    }
+
+    /* ✅ Telegram theme override */
+    body.tg{
+      --bg: var(--tg-theme-bg-color, var(--bg));
+      --card: var(--tg-theme-secondary-bg-color, var(--card));
+      --text: var(--tg-theme-text-color, var(--text));
+      --muted: var(--tg-theme-hint-color, var(--muted));
+      --primary: var(--tg-theme-button-color, var(--primary));
     }
 
     *{ box-sizing: border-box; }
+    html, body{ height: 100%; }
+
     body{
       margin:0;
       font-family: Vazirmatn, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      background: radial-gradient(1200px 700px at 70% -10%, rgba(96,165,250,.12), transparent 60%),
-                  radial-gradient(1000px 700px at 10% 0%, rgba(34,197,94,.10), transparent 55%),
-                  var(--bg);
+      background: var(--bg);
       color: var(--text);
       overflow-x:hidden;
     }
 
+    /* ✅ Full-bleed background but with rounded edges (no ugly side gaps) */
+    body::before{
+      content:"";
+      position: fixed;
+      inset: 8px;
+      border-radius: var(--page-radius);
+      background:
+        radial-gradient(1200px 700px at 70% -10%, rgba(96,165,250,.14), transparent 60%),
+        radial-gradient(1000px 700px at 10% 0%, rgba(34,197,94,.12), transparent 55%),
+        linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,0));
+      box-shadow: 0 20px 70px rgba(0,0,0,.18);
+      z-index: -1;
+    }
+
+    @media (prefers-color-scheme: dark){
+      body::before{
+        background:
+          radial-gradient(1200px 700px at 70% -10%, rgba(96,165,250,.12), transparent 60%),
+          radial-gradient(1000px 700px at 10% 0%, rgba(34,197,94,.10), transparent 55%),
+          linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,0));
+        box-shadow: 0 22px 80px rgba(0,0,0,.40);
+      }
+    }
+
     .wrap{
-      max-width: 980px;
+      max-width: var(--page-max);
       margin: 0 auto;
-      padding: 18px 16px 28px;
+      padding: 18px var(--page-pad) 28px;
+    }
+    @media (max-width: 700px){
+      .wrap{
+        max-width: 100%;
+        padding-left: 10px;
+        padding-right: 10px;
+      }
     }
 
     .topbar{
       position: sticky;
       top: 0;
       z-index: 10;
-      padding: 14px 0 10px;
-      background: linear-gradient(to bottom, rgba(11,18,32,.92), rgba(11,18,32,.65), rgba(11,18,32,0));
-      backdrop-filter: blur(10px);
+      padding: 14px 12px 10px;
+      border-radius: 22px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.62);
+      backdrop-filter: blur(12px);
+    }
+    @media (prefers-color-scheme: dark){
+      .topbar{
+        background: rgba(11,18,32,.72);
+      }
+    }
+    body.tg .topbar{
+      background: color-mix(in srgb, var(--tg-theme-bg-color, #0b1220) 70%, transparent);
     }
 
     .brand{
@@ -84,7 +155,7 @@
       justify-content:center;
       overflow:hidden;
       flex: 0 0 auto;
-      box-shadow: 0 10px 20px rgba(0,0,0,.25);
+      box-shadow: 0 10px 20px rgba(0,0,0,.12);
     }
     .logo img{ width: 100%; height: 100%; object-fit: cover; }
 
@@ -113,22 +184,30 @@
       padding: 8px 12px;
       border-radius: 999px;
       border: 1px solid var(--border);
-      background: rgba(255,255,255,.05);
+      background: rgba(255,255,255,.55);
       color: var(--muted);
       font-weight: 800;
       font-size: 13px;
       white-space: nowrap;
+      backdrop-filter: blur(10px);
+    }
+    @media (prefers-color-scheme: dark){
+      .pill{ background: rgba(255,255,255,.05); }
     }
 
     .btnGhost{
       border: 1px solid var(--border);
-      background: rgba(255,255,255,.04);
+      background: rgba(255,255,255,.50);
       color: var(--text);
       padding: 10px 12px;
       border-radius: 14px;
       cursor:pointer;
       font-family: inherit;
       font-weight: 900;
+      backdrop-filter: blur(10px);
+    }
+    @media (prefers-color-scheme: dark){
+      .btnGhost{ background: rgba(255,255,255,.04); }
     }
     .btnGhost:active{ transform: translateY(1px); }
 
@@ -147,20 +226,29 @@
       padding: 12px 14px;
       border-radius: 14px;
       border: 1px solid var(--border);
-      background: rgba(255,255,255,.04);
+      background: rgba(255,255,255,.55);
       color: var(--text);
       outline: none;
+      backdrop-filter: blur(10px);
       box-shadow: 0 1px 0 rgba(0,0,0,.02);
     }
-    .search::placeholder{ color: rgba(156,163,175,.9); }
+    @media (prefers-color-scheme: dark){
+      .search{ background: rgba(255,255,255,.04); }
+    }
+    .search::placeholder{ color: color-mix(in srgb, var(--muted) 70%, transparent); }
 
     .seg{
       display:flex;
-      background: rgba(255,255,255,.04);
+      background: rgba(255,255,255,.55);
       border: 1px solid var(--border);
       border-radius: 14px;
       overflow:hidden;
+      backdrop-filter: blur(10px);
     }
+    @media (prefers-color-scheme: dark){
+      .seg{ background: rgba(255,255,255,.04); }
+    }
+
     .seg button{
       flex:1;
       padding: 10px 10px;
@@ -187,7 +275,7 @@
 
     .select{
       border: 1px solid var(--border);
-      background: rgba(255,255,255,.04);
+      background: rgba(255,255,255,.55);
       color: var(--text);
       padding: 10px 12px;
       border-radius: 14px;
@@ -195,6 +283,10 @@
       font-weight: 900;
       outline:none;
       min-width: 220px;
+      backdrop-filter: blur(10px);
+    }
+    @media (prefers-color-scheme: dark){
+      .select{ background: rgba(255,255,255,.04); }
     }
 
     .grid{
@@ -208,11 +300,12 @@
     }
 
     .card{
-      background: rgba(15,23,42,.75);
+      background: var(--card);
       border: 1px solid var(--border);
       border-radius: 22px;
       box-shadow: var(--shadow);
       padding: 14px;
+      backdrop-filter: blur(12px);
     }
 
     .itemHead{
@@ -245,10 +338,14 @@
       padding: 6px 10px;
       border-radius: 999px;
       border: 1px solid var(--border);
-      background: rgba(255,255,255,.05);
+      background: rgba(255,255,255,.55);
       font-size: 12px;
       color: var(--muted);
       font-weight: 900;
+      backdrop-filter: blur(10px);
+    }
+    @media (prefers-color-scheme: dark){
+      .tag{ background: rgba(255,255,255,.05); }
     }
 
     .btnPrimary{
@@ -270,7 +367,7 @@
 
     .likeBtn{
       border: 1px solid var(--border);
-      background: rgba(255,255,255,.04);
+      background: rgba(255,255,255,.50);
       color: var(--text);
       padding: 10px 12px;
       border-radius: 16px;
@@ -280,10 +377,14 @@
       display:inline-flex;
       gap: 8px;
       align-items:center;
+      backdrop-filter: blur(10px);
+    }
+    @media (prefers-color-scheme: dark){
+      .likeBtn{ background: rgba(255,255,255,.04); }
     }
     .likeBtn.liked{
-      border-color: rgba(96,165,250,.45);
-      background: rgba(96,165,250,.14);
+      border-color: color-mix(in srgb, var(--primary) 45%, transparent);
+      background: color-mix(in srgb, var(--primary) 14%, transparent);
       color: var(--primary);
     }
 
@@ -329,9 +430,10 @@
       padding: 16px;
       border-radius: 22px;
       border: 1px solid var(--border);
-      background: rgba(255,255,255,.04);
+      background: var(--card);
       cursor: pointer;
       box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
     }
     .catCard:active{ transform: translateY(1px); }
     .catName{
@@ -375,12 +477,17 @@
       width: min(980px, 96vw);
       max-height: 92vh;
       overflow:auto;
-      background: rgba(15,23,42,.92);
+      background: var(--card);
       border: 1px solid var(--border);
       border-radius: 22px;
-      box-shadow: 0 24px 60px rgba(0,0,0,.45);
+      box-shadow: 0 24px 60px rgba(0,0,0,.30);
       padding: 16px;
+      backdrop-filter: blur(12px);
     }
+    @media (prefers-color-scheme: dark){
+      .playerModal{ box-shadow: 0 24px 60px rgba(0,0,0,.45); }
+    }
+
     .playerHead{
       display:flex;
       align-items:flex-start;
@@ -395,13 +502,17 @@
     }
     .closeBtn{
       border: 1px solid var(--border);
-      background: rgba(255,255,255,.04);
+      background: rgba(255,255,255,.50);
       color: var(--text);
       padding: 10px 12px;
       border-radius: 14px;
       cursor:pointer;
       font-family: inherit;
       font-weight: 900;
+      backdrop-filter: blur(10px);
+    }
+    @media (prefers-color-scheme: dark){
+      .closeBtn{ background: rgba(255,255,255,.04); }
     }
 
     video,audio{
@@ -428,12 +539,17 @@
       padding: 12px 12px;
       border-radius: 14px;
       border: 1px solid var(--border);
-      background: rgba(255,255,255,.04);
+      background: rgba(255,255,255,.55);
       color: var(--text);
       outline:none;
       font-family: inherit;
       font-weight: 700;
+      backdrop-filter: blur(10px);
     }
+    @media (prefers-color-scheme: dark){
+      .inp{ background: rgba(255,255,255,.04); }
+    }
+
     .formGrid{
       display:grid;
       grid-template-columns: 1fr 1fr;
@@ -540,7 +656,7 @@
           <span id="catProgressHint" style="font-weight:900; margin-right:6px;">—</span>
         </div>
 
-        <div class="pill" style="opacity:.9;">
+        <div class="pill" style="opacity:.95;">
           <span class="muted" id="microMotivation">هر قدم کوچک، یک عادت بزرگ می‌سازد.</span>
         </div>
       </div>
@@ -585,6 +701,9 @@
 ========================= */
 const SUPABASE_URL = "https://szjwrqzgiekjaggqsuoh.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_hkKIc6r7pSDCJsUvoOafrg_vK8xQc0F";
+
+/* ✅ Supabase client */
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 /* =========================
    Logo (replace anytime)
@@ -680,7 +799,7 @@ function attachCategoryGate(){
 }
 
 /* =========================
-   Supabase REST
+   Supabase REST (for tables)
 ========================= */
 async function sGet(path) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
@@ -1210,10 +1329,27 @@ function isAdmin(){
 function showUploadStatus(msg, isError=false){
   const el = $("upStatus");
   el.style.display = "block";
-  el.style.color = isError ? "rgba(239,68,68,.95)" : "rgba(34,197,94,.95)";
+  el.style.color = isError ? "rgba(220,38,38,.95)" : "rgba(22,163,74,.95)";
   el.textContent = msg;
 }
 
+/* ✅ اسم فایل را امن و انگلیسی می‌کند تا 400 نخوری */
+function sanitizeFileName(name){
+  const ext = (name.split(".").pop() || "").toLowerCase();
+  const base = name.replace(/\.[^/.]+$/, "");
+
+  const safeBase = base
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9_-]+/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 80);
+
+  return `${safeBase || "file"}_${Date.now()}.${ext || "bin"}`;
+}
+
+/* Duration from file (metadata) */
 function getDurationFromFile(file){
   return new Promise((resolve) => {
     if (!file) return resolve(null);
@@ -1253,26 +1389,24 @@ function detectType(file){
   return "audio";
 }
 
+/* ✅ آپلود حرفه‌ای با Supabase JS SDK (حل قطعی 400) */
 async function uploadToStorage(file){
-  const safeName = (file.name || "file").replace(/\s+/g, "_");
-  const path = `uploads/${Date.now()}_${safeName}`;
-  const url = `${SUPABASE_URL}/storage/v1/object/training-media/${encodeURIComponent(path)}`;
+  const safeName = sanitizeFileName(file.name || "file.bin");
+  const path = `uploads/${safeName}`;
 
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      "apikey": SUPABASE_ANON_KEY,
-      "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-      "Content-Type": file.type || "application/octet-stream",
-      "x-upsert": "true",
-    },
-    body: file
-  });
+  const { data, error } = await supabase
+    .storage
+    .from("training-media")
+    .upload(path, file, {
+      upsert: true,
+      contentType: file.type || "application/octet-stream",
+      cacheControl: "3600"
+    });
 
-  if (!res.ok) throw new Error(await res.text());
+  if (error) throw new Error("Storage upload failed: " + error.message);
 
-  const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/training-media/${path}`;
-  return { path, publicUrl };
+  const { data: pub } = supabase.storage.from("training-media").getPublicUrl(data.path);
+  return { path: data.path, publicUrl: pub.publicUrl };
 }
 
 async function insertContentRow({title, type, category_key, file_url, duration_seconds}){
@@ -1354,8 +1488,13 @@ function initAdminUpload(){
       $("upDurationManual").classList.add("hidden");
       $("upHint").textContent = "فایل را انتخاب کن؛ سیستم مدت را خودکار درمی‌آورد. اگر نشد، فیلد دستی فعال می‌شود.";
     }catch(e){
-      console.error(e);
-      showUploadStatus("خطا در آپلود/ثبت. Policy های Storage یا RLS را چک کن.", true);
+      console.error("UPLOAD/INSERT ERROR:", e);
+      const msg =
+        (typeof e === "string" ? e :
+        (e?.message ? e.message :
+        JSON.stringify(e, null, 2)));
+
+      showUploadStatus("❌ خطای واقعی: " + msg, true);
     }
   });
 }
