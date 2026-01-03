@@ -6,1403 +6,152 @@
   <title>آکادمی سیلانه سبز</title>
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap" rel="stylesheet">
 
   <style>
-    :root{
-      --bg:#0b1220;
-      --card:#0f172a;
-      --text:#e5e7eb;
-      --muted:#9ca3af;
-      --border: rgba(229,231,235,.10);
-      --shadow: 0 10px 26px rgba(0,0,0,.35);
-      --primary:#60a5fa;
-      --primary-weak: rgba(96,165,250,.14);
-      --success:#22c55e;
-      --danger:#ef4444;
-      --radius: 18px;
-    }
-
-    body.tg {
-      --bg: var(--tg-theme-bg-color, #0b1220);
-      --card: var(--tg-theme-secondary-bg-color, #0f172a);
-      --text: var(--tg-theme-text-color, #e5e7eb);
-      --muted: var(--tg-theme-hint-color, #9ca3af);
-      --primary: var(--tg-theme-button-color, #60a5fa);
-    }
-
-    *{ box-sizing: border-box; }
     body{
       margin:0;
-      font-family: Vazirmatn, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      background: radial-gradient(1200px 700px at 70% -10%, rgba(96,165,250,.12), transparent 60%),
-                  radial-gradient(1000px 700px at 10% 0%, rgba(34,197,94,.10), transparent 55%),
-                  var(--bg);
-      color: var(--text);
-      overflow-x:hidden;
+      font-family: Vazirmatn, sans-serif;
+      background:#0b1220;
+      color:#fff;
     }
-
-    .wrap{
-      max-width: 980px;
-      margin: 0 auto;
-      padding: 18px 16px 28px;
-    }
-
-    .topbar{
-      position: sticky;
-      top: 0;
-      z-index: 10;
-      padding: 14px 0 10px;
-      background: linear-gradient(to bottom, rgba(11,18,32,.92), rgba(11,18,32,.65), rgba(11,18,32,0));
-      backdrop-filter: blur(10px);
-    }
-
-    .brand{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap: 12px;
-    }
-
-    .brandRight{
-      display:flex;
-      align-items:flex-start;
-      gap: 12px;
-      min-width: 0;
-    }
-
-    .logo{
-      width: 42px;
-      height: 42px;
-      border-radius: 14px;
-      background: rgba(255,255,255,.06);
-      border: 1px solid var(--border);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      overflow:hidden;
-      flex: 0 0 auto;
-      box-shadow: 0 10px 20px rgba(0,0,0,.25);
-    }
-    .logo img{ width: 100%; height: 100%; object-fit: cover; }
-
-    .title{
-      font-size: 22px;
-      font-weight: 900;
-      letter-spacing: -0.3px;
-      margin: 0;
-      line-height: 1.2;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 72vw;
-    }
-
-    .subtitle{
-      margin-top: 6px;
-      font-size: 13px;
-      color: var(--muted);
-    }
-
+    .wrap{max-width:900px;margin:auto;padding:16px;}
     .pill{
-      display:inline-flex;
-      align-items:center;
-      gap: 8px;
-      padding: 8px 12px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,.05);
-      color: var(--muted);
-      font-weight: 800;
-      font-size: 13px;
-      white-space: nowrap;
+      display:inline-block;
+      padding:8px 14px;
+      border-radius:999px;
+      background:#1f2937;
+      font-size:14px;
+      margin-bottom:12px;
     }
-
-    .btnGhost{
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,.04);
-      color: var(--text);
-      padding: 10px 12px;
-      border-radius: 14px;
-      cursor:pointer;
-      font-family: inherit;
-      font-weight: 900;
-    }
-    .btnGhost:active{ transform: translateY(1px); }
-
-    .controls{
-      margin-top: 12px;
-      display:grid;
-      grid-template-columns: 1fr 240px;
-      gap: 10px;
-    }
-    @media (max-width: 700px){
-      .controls{ grid-template-columns: 1fr; }
-    }
-
-    .search{
-      width:100%;
-      padding: 12px 14px;
-      border-radius: 14px;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,.04);
-      color: var(--text);
-      outline: none;
-      box-shadow: 0 1px 0 rgba(0,0,0,.02);
-    }
-    .search::placeholder{ color: rgba(156,163,175,.9); }
-
-    .seg{
-      display:flex;
-      background: rgba(255,255,255,.04);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      overflow:hidden;
-    }
-    .seg button{
-      flex:1;
-      padding: 10px 10px;
-      border:0;
-      background: transparent;
-      cursor:pointer;
-      color: var(--muted);
-      font-weight: 900;
-      font-family: inherit;
-    }
-    .seg button.active{
-      color: var(--primary);
-      background: var(--primary-weak);
-    }
-
-    .toolbar{
-      margin-top: 10px;
-      display:flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items:center;
-      justify-content: space-between;
-    }
-
-    .select{
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,.04);
-      color: var(--text);
-      padding: 10px 12px;
-      border-radius: 14px;
-      font-family: inherit;
-      font-weight: 900;
-      outline:none;
-      min-width: 220px;
-    }
-
-    .grid{
-      margin-top: 14px;
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-    @media (max-width: 860px){
-      .grid{ grid-template-columns: 1fr; }
-    }
-
     .card{
-      background: rgba(15,23,42,.75);
-      border: 1px solid var(--border);
-      border-radius: 22px;
-      box-shadow: var(--shadow);
-      padding: 14px;
+      background:#111827;
+      border-radius:16px;
+      padding:16px;
+      margin-top:12px;
     }
-
-    .itemHead{
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap: 12px;
-    }
-
-    .itemTitle{
-      font-weight: 900;
-      margin: 0 0 6px;
-      font-size: 16px;
-      line-height: 1.4;
-    }
-
-    .meta{
-      font-size: 13px;
-      color: var(--muted);
-      display:flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items:center;
-    }
-
-    .tag{
-      display:inline-flex;
-      align-items:center;
-      gap: 6px;
-      padding: 6px 10px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,.05);
-      font-size: 12px;
-      color: var(--muted);
-      font-weight: 900;
-    }
-
-    .btnPrimary{
-      border: 0;
-      border-radius: 16px;
-      padding: 10px 14px;
-      cursor:pointer;
-      background: var(--primary);
-      color: #071023;
-      font-weight: 900;
-      font-family: inherit;
-      white-space: nowrap;
-      box-shadow: 0 12px 22px rgba(96,165,250,.18);
-    }
-    body.tg .btnPrimary{
-      color: var(--tg-theme-button-text-color, #071023);
-    }
-    .btnPrimary:active{ transform: translateY(1px); }
-
-    .likeBtn{
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,.04);
-      color: var(--text);
-      padding: 10px 12px;
-      border-radius: 16px;
-      cursor:pointer;
-      font-family: inherit;
-      font-weight: 900;
-      display:inline-flex;
-      gap: 8px;
-      align-items:center;
-    }
-    .likeBtn.liked{
-      border-color: rgba(96,165,250,.45);
-      background: rgba(96,165,250,.14);
-      color: var(--primary);
-    }
-
-    .progressRow{
-      margin-top: 12px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap: 10px;
-    }
-    .bar{
-      flex:1;
-      height: 10px;
-      border-radius: 999px;
-      background: rgba(156,163,175,.16);
-      overflow:hidden;
-      border: 1px solid var(--border);
-    }
-    .bar > div{
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, var(--primary), var(--success));
-      border-radius: 999px;
-      transition: width .25s ease;
-    }
-    .percent{
-      font-weight: 900;
-      color: var(--text);
-      min-width: 44px;
-      text-align:left;
-    }
-
-    .catGrid{
-      margin-top: 14px;
-      display:grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-    }
-    @media (max-width: 700px){
-      .catGrid{ grid-template-columns: 1fr; }
-    }
-    .catCard{
-      padding: 16px;
-      border-radius: 22px;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,.04);
-      cursor: pointer;
-      box-shadow: var(--shadow);
-    }
-    .catCard:active{ transform: translateY(1px); }
-    .catName{
-      font-size: 16px;
-      font-weight: 900;
-      margin: 0 0 6px;
-    }
-    .catDesc{
-      margin: 0;
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.6;
-    }
-
-    .hint{
-      margin-top: 10px;
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.7;
-    }
-
-    .empty{
-      margin-top: 12px;
-      padding: 18px;
-      text-align:center;
-      color: var(--muted);
-    }
-
-    .overlay{
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,.55);
-      display:none;
-      align-items:center;
-      justify-content:center;
-      padding: 18px;
-      z-index: 999;
-    }
-    .overlay.show{ display:flex; }
-    .playerModal{
-      width: min(980px, 96vw);
-      max-height: 92vh;
-      overflow:auto;
-      background: rgba(15,23,42,.92);
-      border: 1px solid var(--border);
-      border-radius: 22px;
-      box-shadow: 0 24px 60px rgba(0,0,0,.45);
-      padding: 16px;
-    }
-    .playerHead{
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap: 12px;
-    }
-    .playerTitle{
-      margin:0;
-      font-size: 16px;
-      font-weight: 900;
-      line-height: 1.5;
-    }
-    .closeBtn{
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,.04);
-      color: var(--text);
-      padding: 10px 12px;
-      border-radius: 14px;
-      cursor:pointer;
-      font-family: inherit;
-      font-weight: 900;
-    }
-
-    video,audio{
+    .inp, .select{
       width:100%;
-      border-radius: 16px;
-      outline:none;
-      background: rgba(0,0,0,.25);
-      margin-top: 12px;
+      padding:10px;
+      border-radius:10px;
+      border:none;
+      background:#1f2937;
+      color:#fff;
+      margin-bottom:8px;
     }
-
-    .motivate{
-      margin-top: 10px;
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.7;
+    .btn{
+      padding:10px 16px;
+      border-radius:12px;
+      border:none;
+      background:#3b82f6;
+      color:#000;
+      font-weight:700;
+      cursor:pointer;
     }
-
-    .muted{ color: var(--muted); }
-    .hidden{ display:none !important; }
-
-    /* Admin upload inputs */
-    .inp{
-      width:100%;
-      padding: 12px 12px;
-      border-radius: 14px;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,.04);
-      color: var(--text);
-      outline:none;
-      font-family: inherit;
-      font-weight: 700;
-    }
-    .formGrid{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-    @media (max-width: 560px){
-      .formGrid{ grid-template-columns: 1fr; }
-    }
+    .hidden{display:none;}
+    .hint{font-size:13px;color:#9ca3af;margin-top:8px;}
   </style>
 </head>
 
 <body>
-  <div class="wrap">
-    <div class="topbar">
-      <div class="brand">
-        <div class="brandRight">
-          <div class="logo" title="سیلانه سبز">
-            <img id="logoImg" alt="Seylaneh Sabz Logo" />
-          </div>
-          <div style="min-width:0;">
-            <h1 class="title">آکادمی سیلانه سبز</h1>
-            <div class="subtitle" id="tagline">یادگیری مستمر، مزیت رقابتی ما</div>
-          </div>
-        </div>
+<div class="wrap">
 
-        <button id="btnChangeCategory" class="btnGhost hidden">تغییر دسته</button>
-      </div>
-
-      <div id="controlsBlock" class="hidden">
-        <div class="controls">
-          <input id="q" class="search" placeholder="جستجو در آموزش‌ها (مثلاً: فروش، محصول، ...)" />
-          <div class="seg" role="tablist" aria-label="فیلتر نوع محتوا">
-            <button id="f_all" class="active" type="button">همه</button>
-            <button id="f_audio" type="button">پادکست</button>
-            <button id="f_video" type="button">ویدیو</button>
-          </div>
-        </div>
-
-        <div class="toolbar">
-          <div class="pill" id="catPill">—</div>
-          <select id="sortSel" class="select" aria-label="مرتب‌سازی">
-            <option value="smart">مرتب‌سازی هوشمند (پیش‌فرض)</option>
-            <option value="newest">جدیدترین محتوا</option>
-            <option value="liked">بیشترین لایک</option>
-            <option value="engaging">جذاب‌ترین محتوا</option>
-          </select>
-        </div>
-      </div>
-    </div>
-
-    <div id="categoryGate">
-      <div style="display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap; margin-top:12px;">
-        <div class="pill" style="border-radius:999px;">
-          پیشرفت شما:
-          <span id="overallProgress" style="font-weight:900; margin-right:6px;">0%</span>
-        </div>
-
-        <button id="btnContinue" class="btnGhost" style="border-radius:999px;" disabled>
-          ادامه:
-          <span id="continueTitle" style="font-weight:900; margin-right:6px;">—</span>
-        </button>
-
-        <div id="continueHint" class="hint" style="margin:0; flex-basis:100%; display:none;"></div>
-      </div>
-
-      <!-- Admin Upload Panel -->
-      <div id="adminUpload" class="card hidden" style="margin-top:12px;">
-        <div class="itemTitle" style="margin-bottom:8px;">آپلود محتوا (ادمین)</div>
-
-        <div class="formGrid">
-          <input id="upTitle" class="inp" placeholder="عنوان محتوا" />
-          <select id="upCategory" class="select" style="min-width:auto;">
-            <option value="sales">آموزش فروش</option>
-            <option value="product">آموزش محصول</option>
-            <option value="mindset">نگرشی</option>
-            <option value="campaign">آموزش کمپین</option>
-            <option value="book">خلاصه کتاب</option>
-          </select>
-
-          <input id="upFile" type="file" class="inp" />
-          <input id="upDurationManual" class="inp hidden" placeholder="مدت زمان (ثانیه) - دستی وارد کن" inputmode="numeric" />
-        </div>
-
-        <div class="hint" id="upHint" style="margin-top:10px;">
-          فایل را انتخاب کن؛ سیستم مدت را خودکار درمی‌آورد. اگر نشد، فیلد دستی فعال می‌شود.
-        </div>
-
-        <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:12px;">
-          <button id="btnUpload" class="btnPrimary">آپلود و ثبت</button>
-        </div>
-
-        <div class="hint" id="upStatus" style="margin-top:10px; display:none;"></div>
-      </div>
-
-      <div class="catGrid" id="catGrid"></div>
-    </div>
-
-    <div id="listArea" class="hidden">
-      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:12px;">
-        <div class="pill">
-          پیشرفت این دسته:
-          <span id="catProgress" style="font-weight:900; margin-right:6px;">0%</span>
-          <span class="muted">•</span>
-          <span id="catProgressHint" style="font-weight:900; margin-right:6px;">—</span>
-        </div>
-
-        <div class="pill" style="opacity:.9;">
-          <span class="muted" id="microMotivation">هر قدم کوچک، یک عادت بزرگ می‌سازد.</span>
-        </div>
-      </div>
-
-      <div id="list" class="grid"></div>
-    </div>
-
+  <!-- نمایش Telegram ID -->
+  <div class="pill">
+    Telegram ID شما:
+    <span id="debugTid" style="font-weight:800;"></span>
   </div>
 
-  <div id="overlay" class="overlay" aria-hidden="true">
-    <div class="playerModal">
-      <div class="playerHead">
-        <div>
-          <h3 id="nowTitle" class="playerTitle"></h3>
-          <div class="meta" style="margin-top:8px;">
-            <span class="tag" id="nowType">—</span>
-            <span class="tag" id="nowDuration">—</span>
-            <span class="tag" id="nowLikes">♡ 0</span>
-          </div>
-        </div>
-        <div style="display:flex; gap:10px; align-items:center;">
-          <button id="btnFullscreen" class="closeBtn hidden" style="border-radius:14px;">تمام صفحه</button>
-          <button id="btnClose" class="closeBtn">بستن</button>
-        </div>
-      </div>
+  <!-- پنل آپلود -->
+  <div class="card">
+    <h3>آپلود محتوا (ادمین)</h3>
 
-      <div id="playerArea"></div>
+    <input id="upTitle" class="inp" placeholder="عنوان محتوا" />
 
-      <div class="progressRow" style="margin-top: 14px;">
-        <div class="bar"><div id="nowBar"></div></div>
-        <div class="percent" id="nowPercent">0%</div>
-      </div>
+    <select id="upCategory" class="select">
+      <option value="sales">آموزش فروش</option>
+      <option value="product">آموزش محصول</option>
+      <option value="mindset">نگرشی</option>
+      <option value="campaign">کمپین</option>
+      <option value="book">خلاصه کتاب</option>
+    </select>
 
-      <div class="motivate" id="motivateLine">اگر تا آخر بری، فردا راحت‌تری.</div>
-      <div class="hint">پیشرفت شما خودکار ذخیره می‌شود.</div>
+    <input id="upFile" type="file" class="inp" />
+
+    <input id="upDurationManual" class="inp hidden"
+           placeholder="مدت زمان (ثانیه) - دستی وارد کن" />
+
+    <button id="btnUpload" class="btn">آپلود</button>
+
+    <div class="hint" id="upHint">
+      ابتدا تلاش می‌شود مدت از فایل خوانده شود.
     </div>
   </div>
+
+</div>
 
 <script>
-/* =========================
-   CONFIG (Supabase)
-========================= */
-const SUPABASE_URL = "https://szjwrqzgiekjaggqsuoh.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_hkKIc6r7pSDCJsUvoOafrg_vK8xQc0F";
-
-/* =========================
-   Logo (replace anytime)
-========================= */
-const LOGO_DATA_URI =
-  "data:image/svg+xml;utf8," +
-  encodeURIComponent(`
-  <svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
-    <defs>
-      <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0" stop-color="#22c55e"/>
-        <stop offset="1" stop-color="#60a5fa"/>
-      </linearGradient>
-    </defs>
-    <rect width="96" height="96" rx="24" fill="rgba(255,255,255,.06)"/>
-    <circle cx="48" cy="48" r="28" fill="url(#g)" opacity="0.95"/>
-    <path d="M57 34c-9 2-15 8-17 17-1 6 2 12 8 13 6 1 12-3 14-9 2-5 1-14-5-21z"
-          fill="rgba(7,16,35,.92)"/>
-    <path d="M41 57c6-6 12-10 19-12" stroke="rgba(7,16,35,.85)" stroke-width="3" stroke-linecap="round"/>
-  </svg>`);
-
-/* =========================
+/* =====================
    Telegram
-========================= */
+===================== */
 const tg = window.Telegram?.WebApp;
-
-function resolveUserId() {
-  try {
-    if (tg) {
-      tg.ready();
-      const id = tg.initDataUnsafe?.user?.id;
-      if (id) return String(id);
-    }
-  } catch (e) {}
-
-  const qs = new URLSearchParams(location.search);
-  const qid = qs.get("uid");
-  if (qid) return String(qid);
-
-  const saved = localStorage.getItem("dev_uid");
-  if (saved) return saved;
-
-  return "web_preview";
-}
-
-const TELEGRAM_ID = resolveUserId();
+let TELEGRAM_ID = "unknown";
 
 if (tg) {
-  document.body.classList.add("tg");
-  try { tg.expand(); } catch(e){}
+  tg.ready();
+  TELEGRAM_ID = tg.initDataUnsafe?.user?.id || "unknown";
 }
 
-/* =========================
-   Helpers
-========================= */
-const $ = (id) => document.getElementById(id);
-
-function secondsToMin(sec) {
-  sec = Math.max(0, Math.floor(sec || 0));
-  const m = Math.floor(sec / 60);
-  const s = sec % 60;
-  return `${m}:${String(s).padStart(2,'0')}`;
-}
-function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
-function calcPercent(pos, duration){
-  if (!duration || duration <= 0) return 0;
-  return clamp((pos / duration) * 100, 0, 100);
-}
-function show(el){ if(!el) return; el.hidden = false; el.classList.remove("hidden"); el.style.display = ""; }
-function hide(el){ if(!el) return; el.hidden = true; el.classList.add("hidden"); el.style.display = "none"; }
-
-function captureCategoryGate(){
-  categoryGateEl = $("categoryGate");
-  categoryGateParent = categoryGateEl ? categoryGateEl.parentNode : null;
-  categoryGateNextSibling = categoryGateEl ? categoryGateEl.nextSibling : null;
-}
-
-function detachCategoryGate(){
-  if(!categoryGateEl) captureCategoryGate();
-  if(!categoryGateEl || !categoryGateEl.parentNode) return;
-  categoryGateEl.parentNode.removeChild(categoryGateEl);
-}
-
-function attachCategoryGate(){
-  if(!categoryGateEl) captureCategoryGate();
-  if(!categoryGateEl || !categoryGateParent) return;
-  if(categoryGateEl.parentNode) return;
-  if(categoryGateNextSibling && categoryGateNextSibling.parentNode === categoryGateParent){
-    categoryGateParent.insertBefore(categoryGateEl, categoryGateNextSibling);
-  }else{
-    categoryGateParent.appendChild(categoryGateEl);
-  }
-}
-
-/* =========================
-   Supabase REST
-========================= */
-async function sGet(path) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
-    headers: {
-      "apikey": SUPABASE_ANON_KEY,
-      "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-    }
-  });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
-}
-
-async function sPost(path, body, merge=false) {
-  const headers = {
-    "apikey": SUPABASE_ANON_KEY,
-    "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-    "Content-Type": "application/json",
-  };
-  if (merge) headers["Prefer"] = "resolution=merge-duplicates";
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) throw new Error(await res.text());
-  return true;
-}
-
-async function sDelete(path) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
-    method: "DELETE",
-    headers: {
-      "apikey": SUPABASE_ANON_KEY,
-      "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-    }
-  });
-  if (!res.ok) throw new Error(await res.text());
-  return true;
-}
-
-/* =========================
-   Categories
-========================= */
-const CATEGORIES = [
-  { key: "sales",  title: "آموزش فروش",   desc: "مهارت‌های مذاکره، پیگیری، بستن فروش" },
-  { key: "product",title: "آموزش محصول", desc: "دانش محصول، مزایا، تفاوت‌ها و کاربردها" },
-  { key: "mindset",title: "نگرشی",       desc: "تفکر، انگیزه، مدیریت زمان، رشد فردی" },
-  { key: "campaign",title:"آموزش کمپین", desc: "کمپین‌سازی، اجرا، KPI و تحلیل" },
-  { key: "book",  title: "خلاصه کتاب",  desc: "چکیده‌های کاربردی برای تصمیم‌گیری بهتر" },
-];
-
-function renderCategories(){
-  const grid = $("catGrid");
-  grid.innerHTML = "";
-  CATEGORIES.forEach(c => {
-    const div = document.createElement("div");
-    div.className = "catCard";
-    div.innerHTML = `<div class="catName">${c.title}</div><p class="catDesc">${c.desc}</p>`;
-    div.onclick = () => selectCategory(c.key);
-    grid.appendChild(div);
-  });
-}
-
-/* =========================
-   State
-========================= */
-let ALL_CONTENTS = [];
-let CURRENT_CATEGORY = null;
-let TYPE_FILTER = "all";
-let SORT_MODE = "smart";
-
-let categoryGateEl = null;
-let categoryGateParent = null;
-let categoryGateNextSibling = null;
-
-let progressByContent = new Map();
-let engagementByContent = new Map();
-let likeCountByContent = new Map();
-let likedByMe = new Set();
-
-let continueItem = null;
-
-/* =========================
-   UI init
-========================= */
-$("logoImg").src = LOGO_DATA_URI;
-
-/* =========================
-   Progress / Likes / Engagement loaders
-========================= */
-async function loadMyProgress(){
-  const rows = await sGet(`progress?select=content_id,last_position_seconds,completion_percent,updated_at,duration_seconds&telegram_id=eq.${encodeURIComponent(TELEGRAM_ID)}&limit=5000`);
-  progressByContent = new Map();
-  rows.forEach(r => progressByContent.set(r.content_id, r));
-}
-
-async function loadEngagementAllUsers(contentIds){
-  if (!contentIds.length) { engagementByContent = new Map(); return; }
-  const inList = contentIds.join(",");
-  const rows = await sGet(`progress?select=content_id,active_seconds&content_id=in.(${inList})&limit=10000`);
-  engagementByContent = new Map();
-  rows.forEach(r => {
-    const prev = engagementByContent.get(r.content_id) || 0;
-    engagementByContent.set(r.content_id, prev + (r.active_seconds || 0));
-  });
-}
-
-async function loadLikesForContents(contentIds){
-  if (!contentIds.length) {
-    likeCountByContent = new Map();
-    likedByMe = new Set();
-    return;
-  }
-  const inList = contentIds.join(",");
-  const rowsAll = await sGet(`likes?select=content_id&content_id=in.(${inList})&limit=10000`);
-  likeCountByContent = new Map();
-  rowsAll.forEach(r => {
-    likeCountByContent.set(r.content_id, (likeCountByContent.get(r.content_id) || 0) + 1);
-  });
-  const rowsMe = await sGet(`likes?select=content_id&content_id=in.(${inList})&telegram_id=eq.${encodeURIComponent(TELEGRAM_ID)}&limit=5000`);
-  likedByMe = new Set(rowsMe.map(r => r.content_id));
-}
-
-async function toggleLike(contentId){
-  const isLiked = likedByMe.has(contentId);
-  try{
-    if (isLiked){
-      await sDelete(`likes?telegram_id=eq.${encodeURIComponent(TELEGRAM_ID)}&content_id=eq.${contentId}`);
-      likedByMe.delete(contentId);
-      likeCountByContent.set(contentId, Math.max(0, (likeCountByContent.get(contentId)||1) - 1));
-    } else {
-      await sPost("likes", [{ telegram_id: TELEGRAM_ID, content_id: contentId, created_at: new Date().toISOString() }], false);
-      likedByMe.add(contentId);
-      likeCountByContent.set(contentId, (likeCountByContent.get(contentId)||0) + 1);
-    }
-  }catch(e){
-    console.error(e);
-  }
-}
-
-/* =========================
-   Continue watching
-========================= */
-async function loadContinueWatching(){
-  const rows = await sGet(`progress?select=content_id,updated_at,last_position_seconds,completion_percent&telegram_id=eq.${encodeURIComponent(TELEGRAM_ID)}&order=updated_at.desc&limit=1`);
-  const p = rows[0];
-  if (!p) return null;
-  const c = ALL_CONTENTS.find(x => x.id === p.content_id);
-  if (!c) return null;
-  return { content: c, progress: p };
-}
-
-function updateContinueUI(){
-  if (!continueItem){
-    $("continueTitle").textContent = "—";
-    $("btnContinue").disabled = true;
-    return;
-  }
-  const {content, progress} = continueItem;
-  $("continueTitle").textContent = content.title.length > 18 ? content.title.slice(0,18) + "…" : content.title;
-  $("btnContinue").disabled = false;
-  $("btnContinue").onclick = () => openPlayer(content);
-}
-
-/* =========================
-   Category selection
-========================= */
-function selectCategory(key){
-  CURRENT_CATEGORY = key;
-  detachCategoryGate();
-  show($("listArea"));
-  show($("controlsBlock"));
-  show($("btnChangeCategory"));
-
-  const catObj = CATEGORIES.find(x => x.key === key);
-  $("catPill").textContent = catObj ? `دسته: ${catObj.title}` : "—";
-
-  const lines = [
-    "یادگیری مستمر، مزیت رقابتی ماست.",
-    "هر قدم کوچک، یک عادت بزرگ می‌سازد.",
-    "ثبات در آموزش، ثبات در نتیجه می‌آورد.",
-  ];
-  $("microMotivation").textContent = lines[Math.floor(Math.random()*lines.length)];
-
-  applyFiltersAndRender();
-}
-
-$("btnChangeCategory").onclick = () => {
-  CURRENT_CATEGORY = null;
-  hide($("listArea"));
-  hide($("controlsBlock"));
-  hide($("btnChangeCategory"));
-
-  attachCategoryGate();
-  show($("categoryGate"));
-  renderCategories();
-
-  $("q").value = "";
-  setType("all");
-  $("sortSel").value = "smart";
-  SORT_MODE = "smart";
-};
-
-/* =========================
-   Filters
-========================= */
-$("f_all").onclick = () => setType("all");
-$("f_audio").onclick = () => setType("audio");
-$("f_video").onclick = () => setType("video");
-$("q").addEventListener("input", () => applyFiltersAndRender());
-$("sortSel").addEventListener("change", () => { SORT_MODE = $("sortSel").value; applyFiltersAndRender(); });
-
-function setType(t){
-  TYPE_FILTER = t;
-  $("f_all").classList.toggle("active", t==="all");
-  $("f_audio").classList.toggle("active", t==="audio");
-  $("f_video").classList.toggle("active", t==="video");
-  applyFiltersAndRender();
-}
-
-/* =========================
-   Rendering list
-========================= */
-function contentTypeLabel(t){ return t === "audio" ? "پادکست" : "ویدیو"; }
-
-function getContentCategoryKey(c){
-  const k = (c.category_key || "").trim();
-  if (CATEGORIES.some(x => x.key === k)) return k;
-  return "other";
-}
-
-function applyFiltersAndRender(){
-  if (!CURRENT_CATEGORY) return;
-
-  const q = ($("q").value || "").trim().toLowerCase();
-
-  let items = ALL_CONTENTS.filter(c => getContentCategoryKey(c) === CURRENT_CATEGORY);
-
-  if (!items.length){
-    $("list").innerHTML = `<div class="card empty">در این دسته هنوز محتوایی ثبت نشده.</div>`;
-    updateCategoryProgress();
-    return;
-  }
-
-  if (TYPE_FILTER !== "all"){
-    items = items.filter(x => x.type === TYPE_FILTER);
-  }
-
-  if (q){
-    items = items.filter(x => (x.title || "").toLowerCase().includes(q));
-  }
-
-  items.sort((a,b) => compareItems(a,b));
-  renderItems(items);
-  updateCategoryProgress();
-}
-
-function compareItems(a,b){
-  const pa = progressByContent.get(a.id);
-  const pb = progressByContent.get(b.id);
-
-  const pctA = Number(pa?.completion_percent || 0);
-  const pctB = Number(pb?.completion_percent || 0);
-
-  const incompleteA = pctA < 99.9;
-  const incompleteB = pctB < 99.9;
-
-  const likesA = likeCountByContent.get(a.id) || 0;
-  const likesB = likeCountByContent.get(b.id) || 0;
-
-  const engA = engagementByContent.get(a.id) || 0;
-  const engB = engagementByContent.get(b.id) || 0;
-
-  const createdA = a.created_at ? new Date(a.created_at).getTime() : a.id;
-  const createdB = b.created_at ? new Date(b.created_at).getTime() : b.id;
-
-  if (SORT_MODE === "newest") return createdB - createdA;
-  if (SORT_MODE === "liked") return (likesB - likesA) || (createdB - createdA);
-  if (SORT_MODE === "engaging") return (engB - engA) || (createdB - createdA);
-
-  if (incompleteA !== incompleteB) return incompleteA ? -1 : 1;
-  if (incompleteA && incompleteB) {
-    if (pctA !== pctB) return pctB - pctA;
-  }
-  return createdB - createdA;
-}
-
-function renderItems(items){
-  const list = $("list");
-  list.innerHTML = "";
-
-  items.forEach(item => {
-    const p = progressByContent.get(item.id);
-    const pct = Number(p?.completion_percent || 0);
-    const duration = Number(item.duration_seconds || 0);
-
-    const likeCount = likeCountByContent.get(item.id) || 0;
-    const isLiked = likedByMe.has(item.id);
-
-    const card = document.createElement("div");
-    card.className = "card";
-
-    card.innerHTML = `
-      <div class="itemHead">
-        <div style="flex:1; min-width:0;">
-          <div class="itemTitle">${item.title}</div>
-          <div class="meta">
-            <span class="tag">${contentTypeLabel(item.type)}</span>
-            <span class="tag">مدت ${secondsToMin(duration)}</span>
-            <span class="tag">♡ ${likeCount}</span>
-          </div>
-        </div>
-
-        <div style="display:flex; gap:10px; align-items:center;">
-          <button class="likeBtn ${isLiked ? "liked" : ""}" data-like="${item.id}" title="لایک">
-            ${isLiked ? "♥" : "♡"} <span>${likeCount}</span>
-          </button>
-          <button class="btnPrimary" data-play="${item.id}">پخش</button>
-        </div>
-      </div>
-
-      <div class="progressRow">
-        <div class="bar"><div style="width:${pct}%;"></div></div>
-        <div class="percent">${pct.toFixed(0)}%</div>
-      </div>
-    `;
-
-    card.querySelector(`[data-play="${item.id}"]`).onclick = () => openPlayer(item);
-    card.querySelector(`[data-like="${item.id}"]`).onclick = async () => {
-      await toggleLike(item.id);
-      applyFiltersAndRender();
-      if (currentPlayerContent && currentPlayerContent.id === item.id){
-        $("nowLikes").textContent = `♡ ${likeCountByContent.get(item.id) || 0}`;
-      }
-    };
-
-    list.appendChild(card);
-  });
-}
-
-/* =========================
-   Progress summaries
-========================= */
-function updateCategoryProgress(){
-  const allInCat = ALL_CONTENTS.filter(c => getContentCategoryKey(c) === CURRENT_CATEGORY);
-  if (!allInCat.length){
-    $("catProgress").textContent = "0%";
-    $("catProgressHint").textContent = "—";
-    return;
-  }
-  let sum = 0;
-  allInCat.forEach(c => sum += Number(progressByContent.get(c.id)?.completion_percent || 0));
-  const avg = sum / allInCat.length;
-  $("catProgress").textContent = `${avg.toFixed(0)}%`;
-  $("catProgressHint").textContent = `${allInCat.length} آموزش در این دسته`;
-}
-
-function updateOverallProgress(){
-  if (!ALL_CONTENTS.length){
-    $("overallProgress").textContent = "0%";
-    return;
-  }
-  let sum = 0;
-  ALL_CONTENTS.forEach(c => sum += Number(progressByContent.get(c.id)?.completion_percent || 0));
-  const avg = sum / ALL_CONTENTS.length;
-  $("overallProgress").textContent = `${avg.toFixed(0)}%`;
-}
-
-/* =========================
-   Player
-========================= */
-let currentPlayerContent = null;
-
-$("btnClose").onclick = closePlayer;
-$("btnFullscreen").onclick = () => {
-  const v = $("playerArea").querySelector("video");
-  if (!v) return;
-  if (v.requestFullscreen) return v.requestFullscreen();
-  if (v.webkitEnterFullscreen) return v.webkitEnterFullscreen();
-  if (v.webkitRequestFullscreen) return v.webkitRequestFullscreen();
-};
-$("overlay").addEventListener("click", (e) => {
-  if (e.target === $("overlay")) closePlayer();
-});
-
-function setMotivationLine(pct){
-  const p = Math.floor(pct);
-  if (p >= 95) return "فقط چند ثانیه تا پایان! عالیه 👌";
-  if (p >= 70) return "تقریباً تمومش کردی. همین یک‌ذره رو ببند.";
-  if (p >= 30) return "خوبه. ادامه بده تا نکته‌های اصلی جمع بشه.";
-  return "شروع عالیه. فقط ۲ دقیقه دیگه ادامه بده.";
-}
-
-async function openPlayer(content){
-  currentPlayerContent = content;
-
-  $("nowTitle").textContent = content.title;
-  $("nowType").textContent = contentTypeLabel(content.type);
-  $("nowDuration").textContent = `مدت ${secondsToMin(content.duration_seconds || 0)}`;
-
-  const likes = likeCountByContent.get(content.id) || 0;
-  $("nowLikes").textContent = `♡ ${likes}`;
-
-  const area = $("playerArea");
-  area.innerHTML = "";
-
-  const isVideo = content.type === "video";
-  if (isVideo) show($("btnFullscreen")); else hide($("btnFullscreen"));
-
-  const media = document.createElement(isVideo ? "video" : "audio");
-  media.controls = true;
-  media.src = content.file_path;
-
-  media.setAttribute("controlsList", "nodownload noplaybackrate");
-  media.setAttribute("disablePictureInPicture", "true");
-  media.oncontextmenu = () => false;
-  if (isVideo) media.playsInline = false;
-
-  area.appendChild(media);
-
-  $("overlay").classList.add("show");
-  $("overlay").setAttribute("aria-hidden", "false");
-
-  const p = progressByContent.get(content.id);
-  const lastPos = Number(p?.last_position_seconds || 0);
-  const duration = Number(content.duration_seconds || 0);
-
-  function updateUI(currentTime){
-    const pos = Math.floor(currentTime || 0);
-    const pct = calcPercent(pos, duration);
-    $("nowPercent").textContent = `${pct.toFixed(0)}%`;
-    $("nowBar").style.width = `${pct}%`;
-    $("motivateLine").textContent = setMotivationLine(pct);
-  }
-
-  media.addEventListener("loadedmetadata", () => {
-    if (lastPos > 0 && lastPos < (media.duration || 999999)) {
-      media.currentTime = lastPos;
-    }
-    updateUI(media.currentTime);
-  });
-
-  let lastSentAt = 0;
-
-  async function saveNow(force=false){
-    const pos = Math.floor(media.currentTime || 0);
-    const pct = calcPercent(pos, duration);
-    updateUI(media.currentTime);
-
-    try{
-      await sPost("progress", [{
-        telegram_id: TELEGRAM_ID,
-        content_id: content.id,
-        last_position_seconds: pos,
-        max_position_seconds: pos,
-        duration_seconds: duration || 0,
-        completion_percent: Number(pct.toFixed(2)),
-        active_seconds: pos,
-        updated_at: new Date().toISOString()
-      }], true);
-
-      // listen_events برای گزارش اکسل
-      try{
-        await sPost("listen_events", [{
-          telegram_id: TELEGRAM_ID,
-          content_id: content.id,
-          event_time: new Date().toISOString(),
-          position_seconds: pos,
-          event_type: force ? "pause_or_end" : "progress"
-        }], false);
-      }catch(e){
-        console.error(e);
-      }
-
-      progressByContent.set(content.id, {
-        content_id: content.id,
-        last_position_seconds: pos,
-        completion_percent: Number(pct.toFixed(2)),
-        updated_at: new Date().toISOString(),
-        duration_seconds: duration || 0
-      });
-      updateOverallProgress();
-    }catch(e){
-      console.error(e);
-    }
-  }
-
-  media.addEventListener("timeupdate", () => {
-    updateUI(media.currentTime);
-    if (Math.abs(media.currentTime - lastSentAt) >= 10) {
-      lastSentAt = media.currentTime;
-      saveNow(false);
-    }
-  });
-
-  media.addEventListener("pause", () => saveNow(true));
-  media.addEventListener("ended", () => {
-    media.currentTime = duration || media.duration || 0;
-    saveNow(true);
-  });
-
-  updateUI(lastPos);
-}
-
-function closePlayer(){
-  try{ hide($("btnFullscreen")); }catch(e){}
-  $("overlay").classList.remove("show");
-  $("overlay").setAttribute("aria-hidden", "true");
-  currentPlayerContent = null;
-  if (CURRENT_CATEGORY) applyFiltersAndRender();
-}
-
-/* =========================
-   Admin Upload (Pro: auto duration, fallback manual)
-========================= */
-// فقط telegram_id هایی که اینجا می‌گذاری پنل آپلود را می‌بینند
-const ADMIN_IDS = new Set([
-  // "123456789"
-]);
-
-function isAdmin(){
-  return ADMIN_IDS.has(String(TELEGRAM_ID));
-}
-
-function showUploadStatus(msg, isError=false){
-  const el = $("upStatus");
-  el.style.display = "block";
-  el.style.color = isError ? "rgba(239,68,68,.95)" : "rgba(34,197,94,.95)";
-  el.textContent = msg;
-}
-
+/* نمایش ID روی صفحه */
+document.getElementById("debugTid").textContent = TELEGRAM_ID;
+
+/* =====================
+   Duration detection
+===================== */
 function getDurationFromFile(file){
-  return new Promise((resolve) => {
-    if (!file) return resolve(null);
-
+  return new Promise((resolve)=>{
     const url = URL.createObjectURL(file);
-    const isVideo = file.type.startsWith("video/");
-    const el = document.createElement(isVideo ? "video" : "audio");
-
-    let settled = false;
-    const cleanup = (val) => {
-      if (settled) return;
-      settled = true;
-      try { URL.revokeObjectURL(url); } catch(e){}
-      resolve(val);
-    };
-
+    const el = document.createElement(
+      file.type.startsWith("video") ? "video" : "audio"
+    );
     el.preload = "metadata";
     el.src = url;
-
     el.onloadedmetadata = () => {
-      const d = Number(el.duration);
-      if (Number.isFinite(d) && d > 0) cleanup(Math.floor(d));
-      else cleanup(null);
+      resolve(Math.floor(el.duration));
+      URL.revokeObjectURL(url);
     };
-    el.onerror = () => cleanup(null);
-
-    // fallback timeout برای webview
-    setTimeout(() => cleanup(null), 2500);
+    el.onerror = () => resolve(null);
+    setTimeout(()=>resolve(null),2000);
   });
 }
 
-function detectType(file){
-  if (!file) return "audio";
-  if (file.type.startsWith("video/")) return "video";
-  if (file.type.startsWith("audio/")) return "audio";
-  const name = (file.name || "").toLowerCase();
-  if (name.endsWith(".mp4") || name.endsWith(".mov") || name.endsWith(".mkv")) return "video";
-  return "audio";
-}
+/* =====================
+   Upload handler (فقط تست)
+===================== */
+document.getElementById("upFile").addEventListener("change", async ()=>{
+  const file = document.getElementById("upFile").files[0];
+  const manual = document.getElementById("upDurationManual");
+  const hint = document.getElementById("upHint");
 
-async function uploadToStorage(file){
-  const safeName = (file.name || "file").replace(/\s+/g, "_");
-  const path = `uploads/${Date.now()}_${safeName}`;
-  const url = `${SUPABASE_URL}/storage/v1/object/training-media/${encodeURIComponent(path)}`;
+  manual.classList.add("hidden");
+  if (!file) return;
 
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      "apikey": SUPABASE_ANON_KEY,
-      "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-      "Content-Type": file.type || "application/octet-stream",
-      "x-upsert": "true",
-    },
-    body: file
-  });
+  hint.textContent = "در حال خواندن مدت از فایل...";
+  const dur = await getDurationFromFile(file);
 
-  if (!res.ok) throw new Error(await res.text());
-
-  const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/training-media/${path}`;
-  return { path, publicUrl };
-}
-
-async function insertContentRow({title, type, category_key, file_url, duration_seconds}){
-  await sPost("contents", [{
-    title,
-    type,
-    category_key,
-    file_path: file_url,
-    duration_seconds: Number(duration_seconds) || 0,
-    created_at: new Date().toISOString()
-  }], false);
-}
-
-function initAdminUpload(){
-  const panel = $("adminUpload");
-  if (!panel) return;
-
-  if (isAdmin()) show(panel); else hide(panel);
-
-  $("upFile")?.addEventListener("change", async () => {
-    const file = $("upFile").files?.[0];
-    $("upDurationManual").classList.add("hidden");
-    $("upDurationManual").value = "";
-    $("upDurationManual").dataset.auto = "";
-
-    if (!file) return;
-
-    $("upHint").textContent = "در حال استخراج مدت زمان از فایل...";
-    const dur = await getDurationFromFile(file);
-
-    if (dur && dur > 0){
-      $("upHint").textContent = `مدت زمان شناسایی شد: ${dur} ثانیه`;
-      $("upDurationManual").classList.add("hidden");
-      $("upDurationManual").dataset.auto = String(dur);
-    } else {
-      $("upHint").textContent = "مدت زمان از فایل قابل استخراج نبود. لطفاً مدت را دستی (ثانیه) وارد کن.";
-      $("upDurationManual").classList.remove("hidden");
-    }
-  }, { passive: true });
-
-  $("btnUpload")?.addEventListener("click", async () => {
-    try{
-      const title = ($("upTitle").value || "").trim();
-      const category_key = $("upCategory").value;
-      const file = $("upFile").files?.[0];
-
-      if (!title) return showUploadStatus("عنوان را وارد کن.", true);
-      if (!file) return showUploadStatus("فایل را انتخاب کن.", true);
-
-      let duration_seconds = Number($("upDurationManual").dataset.auto || 0);
-
-      if (!duration_seconds || duration_seconds <= 0){
-        const manual = Number(($("upDurationManual").value || "").trim());
-        if (!manual || manual <= 0) {
-          return showUploadStatus("مدت زمان مشخص نیست. عدد ثانیه را دستی وارد کن.", true);
-        }
-        duration_seconds = Math.floor(manual);
-      }
-
-      const type = detectType(file);
-
-      showUploadStatus("در حال آپلود فایل به Storage...");
-      const { publicUrl } = await uploadToStorage(file);
-
-      showUploadStatus("آپلود انجام شد. در حال ثبت در جدول contents...");
-      await insertContentRow({
-        title, type, category_key,
-        file_url: publicUrl,
-        duration_seconds
-      });
-
-      showUploadStatus("✅ ثبت شد. در حال ریفرش لیست...");
-      await refreshAll();
-
-      $("upTitle").value = "";
-      $("upFile").value = "";
-      $("upDurationManual").value = "";
-      $("upDurationManual").dataset.auto = "";
-      $("upDurationManual").classList.add("hidden");
-      $("upHint").textContent = "فایل را انتخاب کن؛ سیستم مدت را خودکار درمی‌آورد. اگر نشد، فیلد دستی فعال می‌شود.";
-    }catch(e){
-      console.error(e);
-      showUploadStatus("خطا در آپلود/ثبت. Policy های Storage یا RLS را چک کن.", true);
-    }
-  });
-}
-
-/* =========================
-   Refresh All
-========================= */
-async function refreshAll(){
-  ALL_CONTENTS = await sGet("contents?select=id,title,type,duration_seconds,file_path,category_key,created_at&order=id.desc&limit=5000");
-  await loadMyProgress();
-  continueItem = await loadContinueWatching();
-  updateContinueUI();
-  updateOverallProgress();
-  renderCategories();
-  initAdminUpload();
-}
-
-/* =========================
-   Start
-========================= */
-(async () => {
-  try{
-    await refreshAll();
-
-    const _selectCategory = selectCategory;
-    selectCategory = async (key) => {
-      CURRENT_CATEGORY = key;
-
-      const ids = ALL_CONTENTS
-        .filter(c => getContentCategoryKey(c) === key)
-        .map(c => c.id);
-
-      try{
-        await loadLikesForContents(ids);
-      }catch(e){ console.error(e); likeCountByContent = new Map(); likedByMe = new Set(); }
-
-      try{
-        await loadEngagementAllUsers(ids);
-      }catch(e){ console.error(e); engagementByContent = new Map(); }
-
-      _selectCategory(key);
-    };
-
-  }catch(e){
-    console.error(e);
-    $("catGrid").innerHTML = `<div class="card empty">خطا در بارگذاری. تنظیمات Supabase یا جدول‌ها را بررسی کنید.</div>`;
+  if (dur && dur > 0) {
+    hint.textContent = `مدت تشخیص داده شد: ${dur} ثانیه`;
+    manual.dataset.auto = dur;
+  } else {
+    hint.textContent = "مدت قابل تشخیص نیست، دستی وارد کن.";
+    manual.classList.remove("hidden");
+    manual.dataset.auto = "";
   }
-})();
+});
+
+document.getElementById("btnUpload").onclick = ()=>{
+  alert("این نسخه فقط برای گرفتن Telegram ID است.\nID خود را کپی کن و بعد این بخش را حذف کن.");
+};
 </script>
 </body>
 </html>
