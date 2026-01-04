@@ -1,4 +1,3 @@
-```html
 <!doctype html>
 <html lang="fa" dir="rtl">
 <head>
@@ -465,7 +464,7 @@
       align-items:center;
       justify-content:center;
       padding: 18px;
-      z-index: 999;
+      z-index: 9999;
     }
     .overlay.show{ display:flex; }
     .playerModal{
@@ -554,6 +553,35 @@
     @media (max-width: 560px){
       .formGrid{ grid-template-columns: 1fr; }
     }
+  
+    /* ===== iOS Telegram WebView fixes (Patch-level) ===== */
+    body.ios .topbar,
+    body.ios .card,
+    body.ios .catCard,
+    body.ios .playerModal,
+    body.ios .pill,
+    body.ios .seg,
+    body.ios .search,
+    body.ios .select,
+    body.ios .btnGhost,
+    body.ios .likeBtn,
+    body.ios .closeBtn{
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+    }
+
+    /* جلوگیری از artifact های Blur در iOS */
+    body.ios .topbar{ background: rgba(255,255,255,.78); }
+    @media (prefers-color-scheme: dark){
+      body.ios .topbar{ background: rgba(11,18,32,.78); }
+    }
+
+    /* لمس بهتر روی iOS/Android */
+    .btnGhost,.btnPrimary,.likeBtn,.closeBtn{ touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+
+    /* وقتی پلیر بازه، اسکرول بدنه قفل شود */
+    body.modal-open{ overflow: hidden; }
+
   </style>
 </head>
 
@@ -590,8 +618,7 @@
         </div>
 
         <div class="toolbar">
-          <div class="pill" id="catPill">—</div>
-          <select id="sortSel" class="select" aria-label="مرتب‌سازی">
+<select id="sortSel" class="select" aria-label="مرتب‌سازی">
             <option value="smart">مرتب‌سازی هوشمند (پیش‌فرض)</option>
             <option value="newest">جدیدترین محتوا</option>
             <option value="liked">بیشترین لایک</option>
@@ -649,19 +676,6 @@
     </div>
 
     <div id="listArea" class="hidden">
-      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:12px;">
-        <div class="pill">
-          پیشرفت این دسته:
-          <span id="catProgress" style="font-weight:900; margin-right:6px;">0%</span>
-          <span class="muted">•</span>
-          <span id="catProgressHint" style="font-weight:900; margin-right:6px;">—</span>
-        </div>
-
-        <div class="pill" style="opacity:.95;">
-          <span class="muted" id="microMotivation">هر قدم کوچک، یک عادت بزرگ می‌سازد.</span>
-        </div>
-      </div>
-
       <div id="list" class="grid"></div>
     </div>
   </div>
@@ -672,8 +686,7 @@
         <div>
           <h3 id="nowTitle" class="playerTitle"></h3>
           <div class="meta" style="margin-top:8px;">
-            <span class="tag" id="nowType">—</span>
-            <span class="tag" id="nowDuration">—</span>
+<span class="tag" id="nowDuration">—</span>
             <span class="tag" id="nowLikes">♡ 0</span>
           </div>
         </div>
@@ -727,6 +740,17 @@ function resolveUserId() {
   return "web_preview";
 }
 const TELEGRAM_ID = resolveUserId();
+
+
+// =========================
+// UA flags (iOS / Android WebView)
+// =========================
+const UA = navigator.userAgent || "";
+const IS_IOS = /iPad|iPhone|iPod/i.test(UA) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const IS_ANDROID = /Android/i.test(UA);
+
+if (IS_IOS) document.body.classList.add("ios");
+if (IS_ANDROID) document.body.classList.add("android");
 
 if (tg) {
   document.body.classList.add("tg");
@@ -933,17 +957,10 @@ function selectCategory(key){
   show($("controlsBlock"));
   show($("btnChangeCategory"));
 
-  const catObj = CATEGORIES.find(x => x.key === key);
-  $("catPill").textContent = catObj ? `دسته: ${catObj.title}` : "—";
-
-  const lines = [
-    "یادگیری مستمر، مزیت رقابتی ماست.",
-    "هر قدم کوچک، یک عادت بزرگ می‌سازد.",
-    "ثبات در آموزش، ثبات در نتیجه می‌آورد.",
-  ];
-  $("microMotivation").textContent = lines[Math.floor(Math.random()*lines.length)];
-
-  applyFiltersAndRender();
+  
+  // فقط در صفحه هوم لوگو نمایش داده شود
+  try{ const _logo = document.querySelector(".logo"); if(_logo) _logo.classList.add("hidden"); }catch(e){}
+applyFiltersAndRender();
 }
 
 $("btnChangeCategory").onclick = () => {
@@ -952,7 +969,10 @@ $("btnChangeCategory").onclick = () => {
   hide($("controlsBlock"));
   hide($("btnChangeCategory"));
 
-  attachCategoryGate();
+  
+  // برگشت به هوم: لوگو نمایش داده شود
+  try{ const _logo = document.querySelector(".logo"); if(_logo) _logo.classList.remove("hidden"); }catch(e){}
+attachCategoryGate();
   show($("categoryGate"));
   renderCategories();
 
@@ -1062,8 +1082,7 @@ function renderItems(items){
           <div class="meta">
             <span class="tag">${contentTypeLabel(item.type)}</span>
             <span class="tag">مدت ${secondsToMin(duration)}</span>
-            <span class="tag">♡ ${likeCount}</span>
-          </div>
+</div>
         </div>
 
         <div style="display:flex; gap:10px; align-items:center;">
@@ -1097,7 +1116,11 @@ function renderItems(items){
    Progress summaries
 ========================= */
 function updateCategoryProgress(){
-  const allInCat = ALL_CONTENTS.filter(c => getContentCategoryKey(c) === CURRENT_CATEGORY);
+  
+  const _cp = $("catProgress");
+  const _cph = $("catProgressHint");
+  if (!_cp || !_cph) return; // UI این بخش حذف شده
+const allInCat = ALL_CONTENTS.filter(c => getContentCategoryKey(c) === CURRENT_CATEGORY);
   if (!allInCat.length){
     $("catProgress").textContent = "0%";
     $("catProgressHint").textContent = "—";
@@ -1127,12 +1150,30 @@ function updateOverallProgress(){
 let currentPlayerContent = null;
 
 $("btnClose").onclick = closePlayer;
-$("btnFullscreen").onclick = () => {
+$("btnFullscreen").onclick = async () => {
   const v = $("playerArea").querySelector("video");
   if (!v) return;
-  if (v.requestFullscreen) return v.requestFullscreen();
-  if (v.webkitEnterFullscreen) return v.webkitEnterFullscreen();
-  if (v.webkitRequestFullscreen) return v.webkitRequestFullscreen();
+
+  // 1) Telegram WebApp native fullscreen (اگر پشتیبانی کند) — مخصوصاً برای اندروید مفید است
+  try{
+    if (tg && typeof tg.requestFullscreen === "function") {
+      tg.requestFullscreen();
+    }
+  }catch(e){}
+
+  // 2) استاندارد مرورگر
+  try{
+    if (v.requestFullscreen) {
+      await v.requestFullscreen();
+      return;
+    }
+  }catch(e){}
+
+  // 3) WebKit/iOS fallback
+  try{
+    if (v.webkitEnterFullscreen) { v.webkitEnterFullscreen(); return; }
+    if (v.webkitRequestFullscreen) { v.webkitRequestFullscreen(); return; }
+  }catch(e){}
 };
 $("overlay").addEventListener("click", (e) => {
   if (e.target === $("overlay")) closePlayer();
@@ -1150,8 +1191,7 @@ async function openPlayer(content){
   currentPlayerContent = content;
 
   $("nowTitle").textContent = content.title;
-  $("nowType").textContent = contentTypeLabel(content.type);
-  $("nowDuration").textContent = `مدت ${secondsToMin(content.duration_seconds || 0)}`;
+$("nowDuration").textContent = `مدت ${secondsToMin(content.duration_seconds || 0)}`;
 
   const likes = likeCountByContent.get(content.id) || 0;
   $("nowLikes").textContent = `♡ ${likes}`;
@@ -1176,7 +1216,9 @@ async function openPlayer(content){
   $("overlay").classList.add("show");
   $("overlay").setAttribute("aria-hidden", "false");
 
-  const p = progressByContent.get(content.id);
+  
+  document.body.classList.add("modal-open");
+const p = progressByContent.get(content.id);
   const lastPos = Number(p?.last_position_seconds || 0);
   const duration = Number(content.duration_seconds || 0);
 
@@ -1256,7 +1298,8 @@ function closePlayer(){
   try{ hide($("btnFullscreen")); }catch(e){}
   $("overlay").classList.remove("show");
   $("overlay").setAttribute("aria-hidden", "true");
-  currentPlayerContent = null;
+    document.body.classList.remove("modal-open");
+currentPlayerContent = null;
   if (CURRENT_CATEGORY) applyFiltersAndRender();
 }
 
@@ -1464,4 +1507,3 @@ async function refreshAll(){
 </script>
 </body>
 </html>
-```
