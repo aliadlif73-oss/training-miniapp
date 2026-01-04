@@ -533,6 +533,23 @@ white-space: nowrap;
     /* وقتی پلیر بازه، اسکرول بدنه قفل شود */
     body.modal-open{ overflow: hidden; }
 
+  
+    /* iOS WebView fullscreen quirks:
+       وقتی ویدیو وارد fullscreen native iOS می‌شود، UI مودال ما نباید روی تصویر بیفتد */
+    body.ios-fs #overlay{ background: transparent !important; }
+    body.ios-fs .playerModal{
+      background: transparent !important;
+      border: 0 !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+    }
+    body.ios-fs .playerHead,
+    body.ios-fs .progressRow,
+    body.ios-fs #motivateLine,
+    body.ios-fs .playerModal > .hint{
+      display: none !important;
+    }
+
   </style>
 </head>
 
@@ -686,6 +703,14 @@ function resolveUserId() {
   return "web_preview";
 }
 const TELEGRAM_ID = resolveUserId();
+
+// iOS detection (including iPadOS masquerading as Mac)
+const IS_IOS = (() => {
+  const ua = navigator.userAgent || "";
+  const iOS = /iPad|iPhone|iPod/.test(ua);
+  const iPadOS13Plus = /Macintosh/.test(ua) && ("ontouchend" in document);
+  return iOS || iPadOS13Plus;
+})();
 
 
 // =========================
@@ -1140,9 +1165,20 @@ $("nowDuration").textContent = `مدت ${secondsToMin(content.duration_seconds |
   media.setAttribute("controlsList", "nodownload noplaybackrate");
   media.setAttribute("disablePictureInPicture", "true");
   media.oncontextmenu = () => false;
-  if (isVideo) media.playsInline = false;
+  if (isVideo) {
+    // iOS: playsInline=true باعث می‌شود کنترل‌ها بهتر کار کنند و هنگام fullscreen native، باگ‌های overlay کمتر شود
+    media.playsInline = IS_IOS ? true : false;
+  }
 
   area.appendChild(media);
+
+  // iOS native fullscreen events (prevent overlay UI from stacking on top)
+  if (isVideo && IS_IOS) {
+    const enter = () => document.body.classList.add("ios-fs");
+    const exit  = () => document.body.classList.remove("ios-fs");
+    media.addEventListener("webkitbeginfullscreen", enter);
+    media.addEventListener("webkitendfullscreen", exit);
+  }
 
   $("overlay").classList.add("show");
   $("overlay").setAttribute("aria-hidden", "false");
@@ -1230,6 +1266,7 @@ function closePlayer(){
   $("overlay").classList.remove("show");
   $("overlay").setAttribute("aria-hidden", "true");
     document.body.classList.remove("modal-open");
+  document.body.classList.remove("ios-fs");
 currentPlayerContent = null;
   if (CURRENT_CATEGORY) applyFiltersAndRender();
 }
