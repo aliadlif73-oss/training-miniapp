@@ -738,7 +738,6 @@ const IS_IOS = (() => {
 // UA flags (iOS / Android WebView)
 // =========================
 const UA = navigator.userAgent || "";
-const IS_IOS = /iPad|iPhone|iPod/i.test(UA) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 const IS_ANDROID = /Android/i.test(UA);
 
 if (IS_IOS) document.body.classList.add("ios");
@@ -753,6 +752,27 @@ if (tg) {
    Helpers
 ========================= */
 const $ = (id) => document.getElementById(id);
+
+function showFatal(message){
+  try{
+    let box = document.getElementById("fatalBox");
+    if(!box){
+      box = document.createElement("div");
+      box.id = "fatalBox";
+      box.style.cssText = "position:fixed;left:12px;right:12px;bottom:12px;z-index:99999;background:rgba(220,38,38,.92);color:#fff;padding:12px 14px;border-radius:14px;font-weight:900;line-height:1.6;direction:rtl";
+      document.body.appendChild(box);
+    }
+    box.textContent = message;
+  }catch(e){}
+}
+
+window.addEventListener("error", (e) => {
+  showFatal("خطای اجرا: " + (e?.message || "نامشخص"));
+});
+window.addEventListener("unhandledrejection", (e) => {
+  const msg = (e?.reason?.message) ? e.reason.message : String(e?.reason || "نامشخص");
+  showFatal("خطای Promise: " + msg);
+});
 
 function secondsToMin(sec) {
   sec = Math.max(0, Math.floor(sec || 0));
@@ -1434,7 +1454,8 @@ function initAdminUpload(){
       await insertContentRow({ title, type, category_key, file_url: publicUrl, duration_seconds });
 
       showUploadStatus("✅ ثبت شد. در حال ریفرش لیست...");
-      await refreshAll();
+      try{ renderCategories(); }catch(e){}
+    await refreshAll();
 
       $("upTitle").value = "";
       $("upFile").value = "";
@@ -1464,8 +1485,8 @@ async function refreshAll(){
   continueItem = await loadContinueWatching();
   updateContinueUI();
   updateOverallProgress();
-  renderCategories();
-  initAdminUpload();
+  try{ renderCategories(); }catch(e){ console.error(e); }
+  try{ initAdminUpload(); }catch(e){ console.error(e); }
 }
 
 /* =========================
@@ -1490,7 +1511,13 @@ async function refreshAll(){
     };
   }catch(e){
     console.error(e);
-    $("catGrid").innerHTML = `<div class="card empty">خطا در بارگذاری. تنظیمات Supabase یا جدول‌ها را بررسی کنید.</div>`;
+    try{ renderCategories(); }catch(_e){}
+    const g = $("catGrid");
+    if (g){
+      g.innerHTML = `<div class="card empty">خطا در بارگذاری. اتصال Supabase/اینترنت را بررسی کنید. اگر هیچ تغییری نمی‌بینی، لینک منوبوتن را با ?v=123 عوض کن تا کش تلگرام بشکند.</div>`;
+    } else {
+      showFatal("خطا: catGrid پیدا نشد");
+    }
   }
 })();
 </script>
