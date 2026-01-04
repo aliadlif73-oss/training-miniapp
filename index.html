@@ -66,28 +66,8 @@
       overflow-x:hidden;
     }
 
-    body::before{
-      content:"";
-      position: fixed;
-      inset: 8px;
-      border-radius: var(--page-radius);
-      background:
-        radial-gradient(1200px 700px at 70% -10%, rgba(96,165,250,.14), transparent 60%),
-        radial-gradient(1000px 700px at 10% 0%, rgba(34,197,94,.12), transparent 55%),
-        linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,0));
-      box-shadow: 0 20px 70px rgba(0,0,0,.18);
-      z-index: -1;
-    }
-    @media (prefers-color-scheme: dark){
-      body::before{
-        background:
-          radial-gradient(1200px 700px at 70% -10%, rgba(96,165,250,.12), transparent 60%),
-          radial-gradient(1000px 700px at 10% 0%, rgba(34,197,94,.10), transparent 55%),
-          linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,0));
-        box-shadow: 0 22px 80px rgba(0,0,0,.40);
-      }
-    }
-
+    body::before{ display:none; }
+    
     .wrap{
       max-width: var(--page-max);
       margin: 0 auto;
@@ -105,8 +85,7 @@
       border-radius: 22px;
       border: 1px solid var(--border);
       background: rgba(255,255,255,.62);
-      backdrop-filter: blur(12px);
-    }
+}
     @media (prefers-color-scheme: dark){
       .topbar{ background: rgba(11,18,32,.72); }
     }
@@ -172,6 +151,7 @@
     .logo img{ width: 100%; height: 100%; object-fit: cover; display:block; }
 
     .btnGhost{
+      touch-action: manipulation;
       border: 1px solid var(--border);
       background: rgba(255,255,255,.50);
       color: var(--text);
@@ -180,18 +160,18 @@
       cursor:pointer;
       font-family: inherit;
       font-weight: 900;
-      backdrop-filter: blur(10px);
-      white-space: nowrap;
+white-space: nowrap;
     }
     @media (prefers-color-scheme: dark){
-      .btnGhost{ background: rgba(255,255,255,.04); }
+      .btnGhost{
+      touch-action: manipulation; background: rgba(255,255,255,.04); }
     }
     .btnGhost:active{ transform: translateY(1px); }
 
     .controls{
       margin-top: 12px;
       display:grid;
-      grid-template-columns: 1fr 240px;
+      grid-template-columns: 1fr;
       gap: 10px;
     }
     @media (max-width: 700px){
@@ -206,39 +186,13 @@
       background: rgba(255,255,255,.55);
       color: var(--text);
       outline: none;
-      backdrop-filter: blur(10px);
-      box-shadow: 0 1px 0 rgba(0,0,0,.02);
+box-shadow: 0 1px 0 rgba(0,0,0,.02);
     }
     @media (prefers-color-scheme: dark){
       .search{ background: rgba(255,255,255,.04); }
     }
     .search::placeholder{ color: color-mix(in srgb, var(--muted) 70%, transparent); }
-
-    .seg{
-      display:flex;
-      background: rgba(255,255,255,.55);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      overflow:hidden;
-      backdrop-filter: blur(10px);
-    }
     @media (prefers-color-scheme: dark){
-      .seg{ background: rgba(255,255,255,.04); }
-    }
-
-    .seg button{
-      flex:1;
-      padding: 10px 10px;
-      border:0;
-      background: transparent;
-      cursor:pointer;
-      color: var(--muted);
-      font-weight: 900;
-      font-family: inherit;
-    }
-    .seg button.active{
-      color: var(--primary);
-      background: var(--primary-weak);
     }
 
     .toolbar{
@@ -262,8 +216,7 @@
       font-weight: 800;
       font-size: 13px;
       white-space: nowrap;
-      backdrop-filter: blur(10px);
-    }
+}
     @media (prefers-color-scheme: dark){
       .pill{ background: rgba(255,255,255,.05); }
     }
@@ -278,8 +231,7 @@
       font-weight: 900;
       outline:none;
       min-width: 220px;
-      backdrop-filter: blur(10px);
-    }
+}
     @media (prefers-color-scheme: dark){
       .select{ background: rgba(255,255,255,.04); }
     }
@@ -300,8 +252,7 @@
       border-radius: 22px;
       box-shadow: var(--shadow);
       padding: 14px;
-      backdrop-filter: blur(12px);
-    }
+}
 
     .itemHead{
       display:flex;
@@ -336,8 +287,7 @@
       font-size: 12px;
       color: var(--muted);
       font-weight: 900;
-      backdrop-filter: blur(10px);
-    }
+}
     @media (prefers-color-scheme: dark){
       .tag{ background: rgba(255,255,255,.05); }
     }
@@ -360,6 +310,7 @@
     .btnPrimary:active{ transform: translateY(1px); }
 
     .likeBtn{
+      touch-action: manipulation;
       border: 1px solid var(--border);
       background: rgba(255,255,255,.50);
       color: var(--text);
@@ -371,10 +322,10 @@
       display:inline-flex;
       gap: 8px;
       align-items:center;
-      backdrop-filter: blur(10px);
-    }
+}
     @media (prefers-color-scheme: dark){
-      .likeBtn{ background: rgba(255,255,255,.04); }
+      .likeBtn{
+      touch-action: manipulation; background: rgba(255,255,255,.04); }
     }
     .likeBtn.liked{
       border-color: color-mix(in srgb, var(--primary) 45%, transparent);
@@ -427,8 +378,7 @@
       background: var(--card);
       cursor: pointer;
       box-shadow: var(--shadow);
-      backdrop-filter: blur(12px);
-    }
+}
     .catCard:active{ transform: translateY(1px); }
     .catName{
       font-size: 16px;
@@ -476,8 +426,7 @@
       border-radius: 22px;
       box-shadow: 0 24px 60px rgba(0,0,0,.30);
       padding: 16px;
-      backdrop-filter: blur(12px);
-    }
+}
     @media (prefers-color-scheme: dark){
       .playerModal{ box-shadow: 0 24px 60px rgba(0,0,0,.45); }
     }
@@ -496,6 +445,7 @@
     }
 
     .closeBtn{
+      touch-action: manipulation;
       border: 1px solid var(--border);
       background: rgba(255,255,255,.50);
       color: var(--text);
@@ -504,11 +454,11 @@
       cursor:pointer;
       font-family: inherit;
       font-weight: 900;
-      backdrop-filter: blur(10px);
-      white-space: nowrap;
+white-space: nowrap;
     }
     @media (prefers-color-scheme: dark){
-      .closeBtn{ background: rgba(255,255,255,.04); }
+      .closeBtn{
+      touch-action: manipulation; background: rgba(255,255,255,.04); }
     }
 
     video,audio{
@@ -539,8 +489,7 @@
       outline:none;
       font-family: inherit;
       font-weight: 700;
-      backdrop-filter: blur(10px);
-    }
+}
     @media (prefers-color-scheme: dark){
       .inp{ background: rgba(255,255,255,.04); }
     }
@@ -566,6 +515,7 @@
     body.ios .btnGhost,
     body.ios .likeBtn,
     body.ios .closeBtn{
+      touch-action: manipulation;
       backdrop-filter: none !important;
       -webkit-backdrop-filter: none !important;
     }
@@ -577,7 +527,8 @@
     }
 
     /* لمس بهتر روی iOS/Android */
-    .btnGhost,.btnPrimary,.likeBtn,.closeBtn{ touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+    .btnGhost,.btnPrimary,.likeBtn,.closeBtn{
+      touch-action: manipulation; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 
     /* وقتی پلیر بازه، اسکرول بدنه قفل شود */
     body.modal-open{ overflow: hidden; }
@@ -610,12 +561,7 @@
       <div id="controlsBlock" class="hidden">
         <div class="controls">
           <input id="q" class="search" placeholder="جستجو در آموزش‌ها (مثلاً: فروش، محصول، ...)" />
-          <div class="seg" role="tablist" aria-label="فیلتر نوع محتوا">
-            <button id="f_all" class="active" type="button">همه</button>
-            <button id="f_audio" type="button">پادکست</button>
-            <button id="f_video" type="button">ویدیو</button>
-          </div>
-        </div>
+</div>
 
         <div class="toolbar">
 <select id="sortSel" class="select" aria-label="مرتب‌سازی">
@@ -863,7 +809,6 @@ function renderCategories(){
 ========================= */
 let ALL_CONTENTS = [];
 let CURRENT_CATEGORY = null;
-let TYPE_FILTER = "all";
 let SORT_MODE = "smart";
 
 let progressByContent = new Map();
@@ -977,7 +922,6 @@ attachCategoryGate();
   renderCategories();
 
   $("q").value = "";
-  setType("all");
   $("sortSel").value = "smart";
   SORT_MODE = "smart";
 };
@@ -985,19 +929,9 @@ attachCategoryGate();
 /* =========================
    Filters
 ========================= */
-$("f_all").onclick = () => setType("all");
-$("f_audio").onclick = () => setType("audio");
-$("f_video").onclick = () => setType("video");
 $("q").addEventListener("input", () => applyFiltersAndRender());
 $("sortSel").addEventListener("change", () => { SORT_MODE = $("sortSel").value; applyFiltersAndRender(); });
 
-function setType(t){
-  TYPE_FILTER = t;
-  $("f_all").classList.toggle("active", t==="all");
-  $("f_audio").classList.toggle("active", t==="audio");
-  $("f_video").classList.toggle("active", t==="video");
-  applyFiltersAndRender();
-}
 
 /* =========================
    Rendering list
@@ -1021,8 +955,6 @@ function applyFiltersAndRender(){
     updateCategoryProgress();
     return;
   }
-
-  if (TYPE_FILTER !== "all") items = items.filter(x => x.type === TYPE_FILTER);
   if (q) items = items.filter(x => (x.title || "").toLowerCase().includes(q));
 
   items.sort((a,b) => compareItems(a,b));
@@ -1080,9 +1012,8 @@ function renderItems(items){
         <div style="flex:1; min-width:0;">
           <div class="itemTitle">${item.title}</div>
           <div class="meta">
-            <span class="tag">${contentTypeLabel(item.type)}</span>
             <span class="tag">مدت ${secondsToMin(duration)}</span>
-</div>
+          </div>
         </div>
 
         <div style="display:flex; gap:10px; align-items:center;">
