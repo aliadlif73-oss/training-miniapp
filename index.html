@@ -550,7 +550,28 @@ white-space: nowrap;
       display: none !important;
     }
 
-  </style>
+  
+    /* ===== iOS WebView readability fixes (Android untouched) ===== */
+    @supports (-webkit-touch-callout: none) {
+      /* Telegram iOS sometimes resolves button text color too close to bg */
+      .btnPrimary{
+        color: #ffffff !important;
+        text-shadow: 0 1px 0 rgba(0,0,0,.18);
+      }
+      /* Ensure ghost buttons are readable too */
+      .btnGhost, .likeBtn, .closeBtn{
+        color: var(--text) !important;
+      }
+    }
+
+
+    @supports (-webkit-touch-callout: none) {
+      body.tg .btnPrimary{
+        background: var(--tg-theme-button-color, var(--primary)) !important;
+      }
+    }
+
+</style>
 </head>
 
 <body>
