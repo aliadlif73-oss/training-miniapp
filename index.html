@@ -607,9 +607,7 @@
     let LIKE_MAP = new Map(); // content_id -> count
     let USER_LIKES = new Set(); // content_id
     let UPLOADING_LOCK = false;
-    let ADMIN_UPLOAD_INIT = false;
-    let LAST_UPLOAD_SIG = null;
-    let LAST_UPLOAD_TS = 0;
+    let ADMIN_UPLOAD_INITED = false;
 
     const CATS = [
       { key:"sales",   title:"آموزش فروش",   desc:"مهارت‌های مذاکره، پیگیری، بستن فروش" },
@@ -637,12 +635,7 @@
       return luminance > 0.65;
     }
 
-    function initTheme(){
-      try{
-        const bg = window.Telegram?.WebApp?.themeParams?.bg_color;
-        if (detectLightFromColor(bg)) document.body.classList.add("light");
-      }catch(e){}
-    }
+    function initTheme(){ /* disabled to keep UI stable across themes */ }
 
     function initTelegram(){
       try{
@@ -1079,17 +1072,11 @@
      *  ADMIN UPLOAD (FIX DUPLICATE)
      ***********************/
     function initAdminUpload(){
-      if (ADMIN_UPLOAD_INIT) {
-        // اگر قبلاً init شده فقط نمایش/عدم نمایش را آپدیت کن
-        const panel = $("adminUpload");
-        if (!panel) return;
-        if (isAdmin()) show(panel); else hide(panel);
-        return;
-      }
-      ADMIN_UPLOAD_INIT = true;
       const panel = $("adminUpload");
       if (!panel) return;
       if (isAdmin()) show(panel); else hide(panel);
+      if (ADMIN_UPLOAD_INITED) return;
+      ADMIN_UPLOAD_INITED = true;
 
       $("upFile")?.addEventListener("change", async () => {
         const file = $("upFile").files?.[0];
@@ -1125,6 +1112,21 @@
           if (!title) throw new Error("عنوان را وارد کن.");
           if (!file) throw new Error("فایل را انتخاب کن.");
 
+          // ✅ جلوگیری از آپلود/ثبت تکراری (بعضی WebViewها یک کلیک را چندبار تریگر می‌کنند)
+          const sig = `${title}|${category_key}|${file.size}|${file.lastModified}`;
+          const sigKey = 'ss_academy_last_upload_sig';
+          const tsKey  = 'ss_academy_last_upload_ts';
+          const lastSig = localStorage.getItem(sigKey);
+          const lastTs  = Number(localStorage.getItem(tsKey) || 0);
+          const nowTs = Date.now();
+          if (lastSig === sig && (nowTs - lastTs) < 30000){
+            showUploadStatus("⚠️ این فایل همین الان ثبت شده؛ از ثبت تکراری جلوگیری شد.", true);
+            return;
+          }
+          // موقتاً امضا را ثبت می‌کنیم؛ اگر خطا شد در catch پاک می‌کنیم
+          localStorage.setItem(sigKey, sig);
+          localStorage.setItem(tsKey, String(nowTs));
+
           let duration_seconds = Number($("upDurationManual").dataset.auto || 0);
           if (!duration_seconds || duration_seconds <= 0){
             const manual = Number(($("upDurationManual").value || "").trim());
@@ -1133,23 +1135,6 @@
           }
 
           const type = detectType(file);
-
-          // ✅ جلوگیری از دوباره‌کاری (در بعضی WebView ها click ممکنه دوبار فایر بشه)
-          // امضای تقریبی: عنوان + دسته + سایز + مدت (اگر طی ۱۰ ثانیه تکرار شد، نادیده بگیر)
-          const sig = [
-            ($("upTitle").value || "").trim(),
-            String($("upCategory").value || ""),
-            String(file.size || 0),
-            String($("upDurationManual").dataset.auto || $("upDurationManual").value || "")
-          ].join("|");
-
-          const now = Date.now();
-          if (LAST_UPLOAD_SIG === sig && (now - LAST_UPLOAD_TS) < 10000){
-            showUploadStatus("⚠️ این آپلود همین الان انجام شده بود (تکراری).");
-            return;
-          }
-          LAST_UPLOAD_SIG = sig;
-          LAST_UPLOAD_TS = now;
 
           // ✅ شناسه یکتا (برای آینده اگر unique index گذاشتی)
           const requestId = `${Date.now()}_${Math.random().toString(16).slice(2)}`;
@@ -1182,6 +1167,7 @@
           if (CURRENT_CATEGORY) renderList();
 
         }catch(e){
+          try{ localStorage.removeItem("ss_academy_last_upload_sig"); localStorage.removeItem("ss_academy_last_upload_ts"); }catch(_){}
           console.error("UPLOAD/INSERT ERROR:", e);
           showUploadStatus("❌ خطا: " + (e?.message || String(e)), true);
         }finally{
@@ -1211,11 +1197,7 @@
     (async function boot(){
       initTheme();
       initTelegram();
-
-      // اگر SUPABASE پر نشده بود:
-      if (SUPABASE_URL.includes("PASTE_") || SUPABASE_ANON_KEY.includes("PASTE_")){
-        alert("لطفاً SUPABASE_URL و SUPABASE_ANON_KEY را داخل کد تنظیم کن.");
-      }
+      // Supabase keys check removed (no popup)
 
       renderCats();
       setCategoryPill();
