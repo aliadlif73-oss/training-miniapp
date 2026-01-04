@@ -558,7 +558,7 @@
             <input id="upFile" class="field" type="file" accept="audio/*,video/*" />
             <input id="upDurationManual" class="field hidden" placeholder="اگر مدت تشخیص داده نشد: مدت زمان (ثانیه)" inputmode="numeric" />
 
-            <button id="btnUpload" class="btnPrimary">آپلود و ثبت</button>
+            <button id="btnUpload" class="btnPrimary" type="button">آپلود و ثبت</button>
             <div class="hint" id="upHint">فایل را انتخاب کن؛ سیستم مدت را خودکار درمی‌آورد. اگر نشد، فیلد دستی فعال می‌شود.</div>
           </div>
 
@@ -607,6 +607,9 @@
     let LIKE_MAP = new Map(); // content_id -> count
     let USER_LIKES = new Set(); // content_id
     let UPLOADING_LOCK = false;
+    let ADMIN_UPLOAD_INIT = false;
+    let LAST_UPLOAD_SIG = null;
+    let LAST_UPLOAD_TS = 0;
 
     const CATS = [
       { key:"sales",   title:"آموزش فروش",   desc:"مهارت‌های مذاکره، پیگیری، بستن فروش" },
@@ -1076,6 +1079,14 @@
      *  ADMIN UPLOAD (FIX DUPLICATE)
      ***********************/
     function initAdminUpload(){
+      if (ADMIN_UPLOAD_INIT) {
+        // اگر قبلاً init شده فقط نمایش/عدم نمایش را آپدیت کن
+        const panel = $("adminUpload");
+        if (!panel) return;
+        if (isAdmin()) show(panel); else hide(panel);
+        return;
+      }
+      ADMIN_UPLOAD_INIT = true;
       const panel = $("adminUpload");
       if (!panel) return;
       if (isAdmin()) show(panel); else hide(panel);
@@ -1122,6 +1133,23 @@
           }
 
           const type = detectType(file);
+
+          // ✅ جلوگیری از دوباره‌کاری (در بعضی WebView ها click ممکنه دوبار فایر بشه)
+          // امضای تقریبی: عنوان + دسته + سایز + مدت (اگر طی ۱۰ ثانیه تکرار شد، نادیده بگیر)
+          const sig = [
+            ($("upTitle").value || "").trim(),
+            String($("upCategory").value || ""),
+            String(file.size || 0),
+            String($("upDurationManual").dataset.auto || $("upDurationManual").value || "")
+          ].join("|");
+
+          const now = Date.now();
+          if (LAST_UPLOAD_SIG === sig && (now - LAST_UPLOAD_TS) < 10000){
+            showUploadStatus("⚠️ این آپلود همین الان انجام شده بود (تکراری).");
+            return;
+          }
+          LAST_UPLOAD_SIG = sig;
+          LAST_UPLOAD_TS = now;
 
           // ✅ شناسه یکتا (برای آینده اگر unique index گذاشتی)
           const requestId = `${Date.now()}_${Math.random().toString(16).slice(2)}`;
