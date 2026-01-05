@@ -88,6 +88,13 @@
       transition: opacity .18s ease, transform .18s ease;
 
 }
+    body.in-cat .topbar{
+      position: static !important;
+      top: auto !important;
+      transform: none !important;
+      opacity: 1 !important;
+    }
+
     .topbar.hideTopbar{opacity:0; transform: translateY(-120%); pointer-events:none; background: transparent !important; border-color: transparent !important; box-shadow:none !important; overflow:hidden; max-height:0; padding-top:0; padding-bottom:0; margin-top:0; margin-bottom:0; }
     .topbar.goneTopbar{display:none !important;}
 
@@ -978,6 +985,7 @@ function updateContinueUI(){
 ========================= */
 function selectCategory(key){
   CURRENT_CATEGORY = key;
+  try{ document.body.classList.add("in-cat"); }catch(e){}
   detachCategoryGate();
   show($("listArea"));
   show($("controlsBlock"));
@@ -992,6 +1000,7 @@ applyFiltersAndRender();
 
 $("btnChangeCategory").onclick = () => {
   CURRENT_CATEGORY = null;
+  try{ document.body.classList.remove("in-cat"); }catch(e){}
   hide($("listArea"));
   hide($("controlsBlock"));
   hide($("btnChangeCategory"));
