@@ -88,7 +88,8 @@
       transition: opacity .18s ease, transform .18s ease;
 
 }
-    .topbar.hideTopbar{opacity:0; transform: translateY(-120%); pointer-events:none;}
+    .topbar.hideTopbar{opacity:0; transform: translateY(-120%); pointer-events:none; background: transparent !important; border-color: transparent !important; box-shadow:none !important; overflow:hidden; max-height:0; padding-top:0; padding-bottom:0; margin-top:0; margin-bottom:0; }
+    .topbar.goneTopbar{display:none !important;}
 
     @media (prefers-color-scheme: dark){
       .topbar{ background: rgba(11,18,32,.72); }
@@ -1511,14 +1512,33 @@ async function refreshAll(){
 function setupTopbarAutoHide(){
   const tb = document.querySelector(".topbar");
   if(!tb) return;
-  const threshold = 120; // after header actions pass
-  const onScroll = () => {
-    if(CURRENT_CATEGORY && (window.scrollY || document.documentElement.scrollTop || 0) > threshold){
+  const threshold = 120; // وقتی از هدر رد شدیم
+  let hideTimer = null;
+
+  const applyHiddenState = (shouldHide) => {
+    if(shouldHide){
       tb.classList.add("hideTopbar");
+      // بعد از انیمیشن، کامل از DOM flow خارجش کن تا "کمرنگ ولی هست" نشه
+      if(hideTimer) clearTimeout(hideTimer);
+      hideTimer = setTimeout(() => {
+        // اگر هنوز باید مخفی باشد
+        if(CURRENT_CATEGORY && (window.scrollY || document.documentElement.scrollTop || 0) > threshold){
+          tb.classList.add("goneTopbar");
+        }
+      }, 220);
     } else {
+      if(hideTimer) clearTimeout(hideTimer);
+      tb.classList.remove("goneTopbar");
       tb.classList.remove("hideTopbar");
     }
   };
+
+  const onScroll = () => {
+    const y = (window.scrollY || document.documentElement.scrollTop || 0);
+    const shouldHide = !!CURRENT_CATEGORY && y > threshold;
+    applyHiddenState(shouldHide);
+  };
+
   window.addEventListener("scroll", onScroll, {passive:true});
   window.__topbarOnScroll = onScroll;
   onScroll();
