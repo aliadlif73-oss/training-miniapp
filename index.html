@@ -1696,7 +1696,7 @@ async function ensureUserOnce(){
   // Check if already registered
   const sel = await supabase
     .from('users')
-    .select('telegram_id')
+    .select('full_name, mobile, position')
     .eq('telegram_id', telegram_id)
     .maybeSingle();
 
