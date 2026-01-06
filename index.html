@@ -1571,9 +1571,16 @@ function setupTopbarAutoHide(){
 
 /* =========================
    Boot
+   NOTE: برای اینکه «Gate» همیشه برای کاربر جدید نمایش داده شود،
+   باید بعد از ساخته‌شدن DOM اجرا شویم (Telegram iOS WebView گاهی
+   اسکریپت را قبل از در دسترس بودن المنت‌های Gate اجرا می‌کند).
 ========================= */
-(async () => {
+window.addEventListener("DOMContentLoaded", async () => {
   try{
+    // 1) اول Gate (ثبت اطلاعات) — فقط یک‌بار و فقط اگر کامل نشده باشد
+    await ensureUserOnce();
+
+    // 2) بعد از ثبت/تأیید کاربر، اپ اصلی بالا بیاید
     await refreshAll();
 
     const _selectCategory = selectCategory;
@@ -1599,7 +1606,7 @@ function setupTopbarAutoHide(){
       showFatal("خطا: catGrid پیدا نشد");
     }
   }
-})();
+});
 
 
 // ====== USER GATE (no-surprises) ======
