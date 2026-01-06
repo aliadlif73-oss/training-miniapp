@@ -1690,7 +1690,7 @@ async function ensureUserOnce(){
   try{
     const resp = await supabase
       .from('users')
-      .select('full_name, mobile, position')
+      .select('full_name, mobile, job_title')
       .eq('telegram_id', telegram_id)
       .maybeSingle();
     existing = resp?.data || null;
@@ -1698,7 +1698,7 @@ async function ensureUserOnce(){
     const isComplete = existing
       && (existing.full_name||'').trim()
       && (existing.mobile||'').trim()
-      && (existing.position||'').trim();
+      && (existing.job_title||'').trim();
 
     if(isComplete) return; // skip gate
 
@@ -1741,7 +1741,7 @@ async function ensureUserOnce(){
       try{
         const { error } = await supabase
           .from('users')
-          .upsert({ telegram_id, full_name, mobile, position }, { onConflict: 'telegram_id' });
+          .upsert({ telegram_id, full_name, mobile, job_title }, { onConflict: 'telegram_id' });
 
         if(error){
           err.textContent = 'ثبت انجام نشد: ' + (error.message || 'Unknown error');
