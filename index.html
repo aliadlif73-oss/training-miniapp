@@ -1,8 +1,13 @@
 <!doctype html>
 <html lang="fa" dir="rtl">
 <head>
+
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
+
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
   <title>آکادمی سیلانه سبز</title>
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -594,6 +599,10 @@ white-space: nowrap;
       }
     }
 
+/* iOS input zoom fix */
+input, select, textarea { font-size: 16px !important; }
+html { -webkit-text-size-adjust: 100%; }
+
 /* === User Gate === */
 .ug-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:999999}
 .ug-card{background:#fff;width:min(420px,92%);border-radius:18px;padding:18px;direction:rtl}
@@ -604,10 +613,9 @@ white-space: nowrap;
 .ug-error{color:#c62828;font-size:13px;margin-bottom:8px}
 .ug-hidden{display:none!important}
 
-
-/* iOS input zoom fix */
-input, select, textarea { font-size: 16px !important; }
-html { -webkit-text-size-adjust: 100%; }
+/* Debug banner (only when ?debug=1) */
+.dbg-bar{position:fixed;left:10px;right:10px;bottom:10px;z-index:1000000;background:rgba(0,0,0,.85);color:#fff;border-radius:12px;padding:10px;font:12px/1.4 sans-serif;direction:ltr;max-height:45vh;overflow:auto}
+.dbg-bar b{color:#ffd54f}
 
 </style>
 </head>
@@ -1498,8 +1506,8 @@ function initAdminUpload(){
 
       showUploadStatus("✅ ثبت شد. در حال ریفرش لیست...");
       try{ renderCategories(); }catch(e){}
-    await await ensureUserOnce();
-      refreshAll();
+    await ensureUserOnce();
+      await refreshAll();
     try{ setupTopbarAutoHide(); }catch(e){}
 
     $("upTitle").value = "";
@@ -1603,59 +1611,104 @@ function setupTopbarAutoHide(){
 })();
 
 
-// ====== USER GATE (safe patch) ======
-async function ensureUserOnce(){
-  try{
-    const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
-    if(!tgUser || !tgUser.id){
-      // If opened outside Telegram, don't block app; show a message if desired.
-      return;
-    }
-    const telegram_id = String(tgUser.id);
+// ====== USER GATE + DEBUG (safe patch) ======
+function dbgEnabled(){
+  try{ return new URLSearchParams(location.search).get('debug') === '1'; }catch(e){ return false; }
+}
+function dbg(msg){
+  if(!dbgEnabled()) return;
+  const bar = document.getElementById('dbgBar');
+  bar.classList.remove('ug-hidden');
+  const t = new Date().toISOString().slice(11,19);
+  bar.innerHTML += `<div><b>${t}</b> ${msg}</div>`;
+}
+function showGate(){ document.getElementById('userGate')?.classList.remove('ug-hidden'); }
+function hideGate(){ document.getElementById('userGate')?.classList.add('ug-hidden'); }
 
-    // Fetch the profile fields
-    const { data: existing, error: selErr } = await supabase
+async function waitTelegramUser(maxMs=1800){
+  const start = Date.now();
+  while(Date.now()-start < maxMs){
+    const u = window.Telegram?.WebApp?.initDataUnsafe?.user;
+    if(u && u.id) return u;
+    await new Promise(r=>setTimeout(r, 150));
+  }
+  return window.Telegram?.WebApp?.initDataUnsafe?.user || null;
+}
+
+async function ensureUserOnce(){
+  dbg('ensureUserOnce() start');
+  const tgUser = await waitTelegramUser();
+  if(!tgUser || !tgUser.id){
+    dbg('NO Telegram user.id (opened outside Telegram or initData missing)');
+    showGate();
+    const ugError = document.getElementById('ugError');
+    ugError.textContent = 'این صفحه باید داخل تلگرام باز شود تا اطلاعات ذخیره شود.';
+    ugError.classList.remove('ug-hidden');
+    return;
+  }
+  const telegram_id = String(tgUser.id);
+  dbg('telegram_id=' + telegram_id);
+
+  let existing = null;
+  try{
+    const sel = await supabase
       .from('users')
       .select('full_name, mobile, job_title')
       .eq('telegram_id', telegram_id)
       .maybeSingle();
 
-    if(selErr){
-      console.warn('users select error', selErr);
-      // اگر خواندن از دیتابیس خطا داد، باز هم فرم را نشان بده تا ثبت انجام شود
+    if(sel.error){
+      dbg('SELECT users error: ' + (sel.error.message || JSON.stringify(sel.error)));
+    }else{
+      existing = sel.data;
+      dbg('SELECT users ok. data=' + JSON.stringify(existing || {}));
     }
+  }catch(e){
+    dbg('SELECT users threw: ' + (e?.message || e));
+  }
 
-    const isComplete = existing &&
-      (existing.full_name||'').trim() &&
-      (existing.mobile||'').trim() &&
-      (existing.job_title||'').trim();
+  const isComplete = existing &&
+    (existing.full_name||'').trim() &&
+    (existing.mobile||'').trim() &&
+    (existing.job_title||'').trim();
 
-    if(isComplete) return;
+  if(isComplete){
+    dbg('profile complete -> no gate');
+    return;
+  }
 
-    const gate = document.getElementById('userGate');
-    const ugError = document.getElementById('ugError');
-    const ugFullName = document.getElementById('ugFullName');
-    const ugMobile = document.getElementById('ugMobile');
-    const ugJobTitle = document.getElementById('ugJobTitle');
-    const ugSubmit = document.getElementById('ugSubmit');
+  dbg('profile missing/incomplete -> show gate');
+  showGate();
 
-    gate.classList.remove('ug-hidden');
+  const ugError = document.getElementById('ugError');
+  const ugFullName = document.getElementById('ugFullName');
+  const ugMobile = document.getElementById('ugMobile');
+  const ugJobTitle = document.getElementById('ugJobTitle');
+  const ugSubmit = document.getElementById('ugSubmit');
 
-    await new Promise(resolve=>{
-      ugSubmit.onclick = async ()=>{
-        const full_name = (ugFullName.value||'').trim();
-        const mobile = (ugMobile.value||'').trim();
-        const job_title = (ugJobTitle.value||'').trim();
+  if(existing){
+    if(existing.full_name) ugFullName.value = existing.full_name;
+    if(existing.mobile) ugMobile.value = existing.mobile;
+    if(existing.job_title) ugJobTitle.value = existing.job_title;
+  }
 
-        if(!full_name || !/^09\d{9}$/.test(mobile) || !job_title){
-          ugError.textContent = 'همه فیلدها رو درست پر کن';
-          ugError.classList.remove('ug-hidden');
-          return;
-        }
+  await new Promise(resolve=>{
+    ugSubmit.onclick = async ()=>{
+      const full_name = (ugFullName.value||'').trim();
+      const mobile = (ugMobile.value||'').trim();
+      const job_title = (ugJobTitle.value||'').trim();
 
-        
-        // اول تلاش می‌کنیم رکورد موجود را آپدیت کنیم (بدون نیاز به UNIQUE)
-        const payload = { full_name, mobile, job_title };
+      if(!full_name || !/^09\d{9}$/.test(mobile) || !job_title){
+        ugError.textContent = 'همه فیلدها رو درست پر کن';
+        ugError.classList.remove('ug-hidden');
+        dbg('validation failed');
+        return;
+      }
+
+      const payload = { full_name, mobile, job_title };
+      dbg('SAVE start payload=' + JSON.stringify(payload));
+
+      try{
         const upd = await supabase
           .from('users')
           .update(payload)
@@ -1665,12 +1718,13 @@ async function ensureUserOnce(){
         if(upd.error){
           ugError.textContent = 'خطای دیتابیس (UPDATE): ' + (upd.error.message || JSON.stringify(upd.error));
           ugError.classList.remove('ug-hidden');
-          console.error('users update error', upd.error);
+          dbg('UPDATE error: ' + (upd.error.message || JSON.stringify(upd.error)));
           return;
         }
 
-        // اگر رکوردی وجود نداشت، insert می‌زنیم
         const updatedRows = Array.isArray(upd.data) ? upd.data.length : (upd.data ? 1 : 0);
+        dbg('UPDATE ok. rows=' + updatedRows);
+
         if(updatedRows === 0){
           const ins = await supabase
             .from('users')
@@ -1680,19 +1734,22 @@ async function ensureUserOnce(){
           if(ins.error){
             ugError.textContent = 'خطای دیتابیس (INSERT): ' + (ins.error.message || JSON.stringify(ins.error));
             ugError.classList.remove('ug-hidden');
-            console.error('users insert error', ins.error);
+            dbg('INSERT error: ' + (ins.error.message || JSON.stringify(ins.error)));
             return;
           }
+          dbg('INSERT ok');
         }
 
-
-        gate.classList.add('ug-hidden');
+        hideGate();
+        dbg('SAVE success -> gate hidden');
         resolve();
-      };
-    });
-  }catch(e){
-    console.error('ensureUserOnce fatal', e);
-  }
+      }catch(e){
+        ugError.textContent = 'خطای غیرمنتظره: ' + (e?.message || e);
+        ugError.classList.remove('ug-hidden');
+        dbg('SAVE threw: ' + (e?.message || e));
+      }
+    };
+  });
 }
 
 </script>
@@ -1708,9 +1765,11 @@ async function ensureUserOnce(){
     <input id="ugJobTitle" placeholder="پوزیشن (مثلاً: بازاریاب)" />
 
     <div id="ugError" class="ug-error ug-hidden"></div>
-    <button id="ugSubmit">ورود به آکادمی</button>
+    <button id="ugSubmit">ثبت و ورود</button>
   </div>
 </div>
+
+<div id="dbgBar" class="dbg-bar ug-hidden"></div>
 
 </body>
 </html>
