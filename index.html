@@ -1653,16 +1653,38 @@ async function ensureUserOnce(){
           return;
         }
 
-        const { error: upErr } = await supabase
+        
+        // اول تلاش می‌کنیم رکورد موجود را آپدیت کنیم (بدون نیاز به UNIQUE)
+        const payload = { full_name, mobile, job_title };
+        const upd = await supabase
           .from('users')
-          .upsert({ telegram_id, full_name, mobile, job_title }, { onConflict: 'telegram_id' });
+          .update(payload)
+          .eq('telegram_id', telegram_id)
+          .select('telegram_id');
 
-        if(upErr){
-          ugError.textContent = 'ثبت اطلاعات ناموفق بود. دسترسی Supabase/اینترنت را چک کن.';
+        if(upd.error){
+          ugError.textContent = 'خطای دیتابیس (UPDATE): ' + (upd.error.message || JSON.stringify(upd.error));
           ugError.classList.remove('ug-hidden');
-          console.error('users upsert error', upErr);
+          console.error('users update error', upd.error);
           return;
         }
+
+        // اگر رکوردی وجود نداشت، insert می‌زنیم
+        const updatedRows = Array.isArray(upd.data) ? upd.data.length : (upd.data ? 1 : 0);
+        if(updatedRows === 0){
+          const ins = await supabase
+            .from('users')
+            .insert({ telegram_id, ...payload })
+            .select('telegram_id');
+
+          if(ins.error){
+            ugError.textContent = 'خطای دیتابیس (INSERT): ' + (ins.error.message || JSON.stringify(ins.error));
+            ugError.classList.remove('ug-hidden');
+            console.error('users insert error', ins.error);
+            return;
+          }
+        }
+
 
         gate.classList.add('ug-hidden');
         resolve();
