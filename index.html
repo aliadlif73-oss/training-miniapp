@@ -8,7 +8,8 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.min.js"></script>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap" rel="stylesheet">
 
@@ -688,6 +689,10 @@ html { -webkit-text-size-adjust: 100%; }
 
         <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:12px;">
           <button id="btnUpload" class="btnPrimary">آپلود و ثبت</button>
+        </div>
+
+        <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:10px;">
+          <button id="btnDownloadReport" class="btnGhost">دانلود گزارش اکسل</button>
         </div>
 
         <div class="hint" id="upStatus" style="margin-top:10px; display:none;"></div>
@@ -1518,6 +1523,94 @@ function initAdminUpload(){
       if (__btn2) __btn2.disabled = false;
     }
   });
+
+  // ===== Admin Report Download (Excel-ready) =====
+  $("btnDownloadReport")?.addEventListener("click", async () => {
+    if (window.__report_inflight) return;
+    window.__report_inflight = true;
+    const btn = $("btnDownloadReport");
+    if (btn) btn.disabled = true;
+
+    try{
+      showUploadStatus("در حال آماده‌سازی گزارش...", false);
+
+      // 1) Load users (optional but helpful)
+      let usersMap = new Map();
+      try{
+        const users = await sGet("users?select=telegram_id,full_name,mobile,job_title&limit=5000");
+        (users||[]).forEach(u => usersMap.set(String(u.telegram_id), u));
+      }catch(e){ /* اگر RLS اجازه نده، گزارش بدون مشخصات هم کار می‌کند */ }
+
+      // 2) Load progress rows
+      const rows = await sGet("progress?select=telegram_id,content_id,completion_percent,active_seconds,updated_at,last_position_seconds,duration_seconds&order=updated_at.desc&limit=5000");
+
+      // 3) Map contents from already loaded ALL_CONTENTS
+      const contentsMap = new Map();
+      (ALL_CONTENTS||[]).forEach(c => contentsMap.set(Number(c.id), c));
+
+      const report = (rows||[]).map(r => {
+        const u = usersMap.get(String(r.telegram_id)) || {};
+        const c = contentsMap.get(Number(r.content_id)) || {};
+        return {
+          telegram_id: r.telegram_id,
+          full_name: u.full_name || "",
+          mobile: u.mobile || "",
+          job_title: u.job_title || "",
+          title: c.title || "",
+          category_key: c.category_key || "",
+          type: c.type || "",
+          completion_percent: r.completion_percent ?? "",
+          active_seconds: r.active_seconds ?? "",
+          last_position_seconds: r.last_position_seconds ?? "",
+          duration_seconds: r.duration_seconds ?? "",
+          updated_at: r.updated_at || ""
+        };
+      });
+
+      if (!report.length){
+        showUploadStatus("گزارشی پیدا نشد.", true);
+        return;
+      }
+
+      // Prefer XLSX (best for Persian/Excel)
+      const stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,"-");
+      const filename = `academy_report_${stamp}.xlsx`;
+
+      if (window.XLSX){
+        const ws = XLSX.utils.json_to_sheet(report);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "report");
+        XLSX.writeFile(wb, filename);
+        showUploadStatus("✅ گزارش دانلود شد.", false);
+      } else {
+        // Fallback: CSV with BOM
+        const headers = Object.keys(report[0]);
+        const esc = (v) => {
+          const s = (v ?? "").toString().replace(/"/g,'""');
+          return /[,"\n]/.test(s) ? `"${s}"` : s;
+        };
+        const csv = [headers.join(","), ...report.map(r => headers.map(h => esc(r[h])).join(","))].join("\n");
+        const blob = new Blob(["\\ufeff" + csv], { type: "text/csv;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `academy_report_${stamp}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        showUploadStatus("✅ گزارش دانلود شد (CSV).", false);
+      }
+    }catch(e){
+      console.error("REPORT ERROR:", e);
+      showUploadStatus("❌ خطا در ساخت گزارش: " + (e?.message || e), true);
+    } finally {
+      window.__report_inflight = false;
+      const btn2 = $("btnDownloadReport");
+      if (btn2) btn2.disabled = false;
+    }
+  });
+
 }
 
 /* =========================
