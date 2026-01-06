@@ -1580,8 +1580,99 @@ function setupTopbarAutoHide(){
 /* =========================
    Boot
 ========================= */
-(async () => {
+
+// ===== User Gate (only addition) =====
+
+async function _tgGetUserId(){
   try{
+    const wa = window.Telegram?.WebApp;
+    const u = wa?.initDataUnsafe?.user;
+    if(u?.id) return u.id;
+    // wait a bit for iOS webview
+    for(let i=0;i<6;i++){
+      await new Promise(r=>setTimeout(r,250));
+      const uu = window.Telegram?.WebApp?.initDataUnsafe?.user;
+      if(uu?.id) return uu.id;
+    }
+  }catch(e){}
+  return null;
+}
+
+async function ensureUserOnce(){
+  const telegram_id = await _tgGetUserId();
+  // If not in Telegram, don't block app; allow using the web view.
+  if(!telegram_id) return;
+
+  let existing = null;
+  try{
+    const sel = await supabase
+      .from('users')
+      .select('full_name, mobile, position')
+      .eq('telegram_id', telegram_id)
+      .maybeSingle();
+    existing = sel?.data || null;
+  }catch(e){ existing = null; }
+
+  const isComplete = existing &&
+    (existing.full_name||'').trim() &&
+    (existing.mobile||'').trim() &&
+    (existing.position||'').trim();
+
+  if(isComplete) return;
+
+  const gate = document.getElementById('userGate');
+  const err = document.getElementById('ugError');
+  const btn = document.getElementById('ugSubmit');
+
+  // Prefill name from Telegram if available
+  try{
+    const u = window.Telegram?.WebApp?.initDataUnsafe?.user;
+    const nm = [u?.first_name, u?.last_name].filter(Boolean).join(' ').trim();
+    if(nm && !document.getElementById('ugFullName').value) document.getElementById('ugFullName').value = nm;
+  }catch(e){}
+
+  gate.classList.remove('ug-hidden');
+
+  return new Promise(resolve=>{
+    btn.onclick = async ()=>{
+      err.classList.add('ug-hidden');
+      const full_name = document.getElementById('ugFullName').value.trim();
+      const mobile = document.getElementById('ugMobile').value.trim();
+      const position = document.getElementById('ugPosition').value.trim();
+
+      if(!full_name || !/^09\d{9}$/.test(mobile) || !position){
+        err.textContent = 'هر سه فیلد را درست وارد کن (موبایل مثل 0912xxxxxxx)';
+        err.classList.remove('ug-hidden');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'در حال ثبت...';
+
+      const { error } = await supabase
+        .from('users')
+        .upsert({ telegram_id, full_name, mobile, position }, { onConflict: 'telegram_id' });
+
+      btn.disabled = false;
+      btn.textContent = 'ورود به آکادمی';
+
+      if(error){
+        err.textContent = 'ثبت اطلاعات ناموفق بود. اینترنت/دسترسی دیتابیس را چک کن.';
+        err.classList.remove('ug-hidden');
+        return;
+      }
+
+      gate.classList.add('ug-hidden');
+      resolve();
+    };
+  });
+}
+
+
+(async () => {
+  
+  await ensureUserOnce();
+try{
     await refreshAll();
 
     const _selectCategory = selectCategory;
@@ -1616,133 +1707,14 @@ function setupTopbarAutoHide(){
     <div class="ug-title">قبل از شروع</div>
     <div class="ug-sub">لطفاً اطلاعاتت رو فقط یک‌بار وارد کن</div>
 
-    <input id="ugFullName" placeholder="نام و نام خانوادگی" />
-    <input id="ugMobile" placeholder="شماره موبایل (09xxxxxxxxx)" inputmode="numeric" />
-    <input id="ugPosition" placeholder="پوزیشن (مثلاً: بازاریاب)" />
+    <input id="ugFullName" placeholder="نام و نام خانوادگی" autocomplete="name" />
+    <input id="ugMobile" placeholder="شماره موبایل (09xxxxxxxxx)" inputmode="numeric" autocomplete="tel" />
+    <input id="ugPosition" placeholder="پوزیشن (مثلاً: بازاریاب)" autocomplete="organization-title" />
 
     <div id="ugError" class="ug-error ug-hidden"></div>
     <button id="ugSubmit">ورود به آکادمی</button>
   </div>
 </div>
-
-
-<script>
-async function _tgGetUserId(){
-  try{
-    const wa = window.Telegram?.WebApp;
-    if (wa?.ready) { try { wa.ready(); } catch(e){} }
-    const u = wa?.initDataUnsafe?.user;
-    if (u?.id) return u.id;
-
-    const initData = wa?.initData || "";
-    if (initData) {
-      const params = new URLSearchParams(initData);
-      const userStr = params.get("user");
-      if (userStr) {
-        try {
-          const userObj = JSON.parse(decodeURIComponent(userStr));
-          if (userObj?.id) return userObj.id;
-        } catch(e){}
-      }
-    }
-  } catch(e){}
-  return null;
-}
-
-function _ugShow(msg){
-  const gate = document.getElementById('userGate');
-  gate.classList.remove('ug-hidden');
-  if (msg){
-    ugError.textContent = msg;
-    ugError.classList.remove('ug-hidden');
-  } else {
-    ugError.classList.add('ug-hidden');
-  }
-}
-
-async function ensureUserOnce(){
-  // Wait briefly for Telegram WebApp to become ready (Telegram/iOS sometimes delays initDataUnsafe)
-  let telegram_id = null;
-  for (let i=0; i<15; i++){
-    telegram_id = await _tgGetUserId();
-    if (telegram_id) break;
-    await new Promise(r=>setTimeout(r, 100));
-  }
-
-  // If we couldn't detect Telegram user (e.g., opened in normal browser), still allow filling the form for testing,
-  // but we can't store to DB without telegram_id.
-  if (!telegram_id){
-    _ugShow('این صفحه باید داخل تلگرام باز شود تا اطلاعات در دیتابیس ذخیره شود.');
-    return new Promise(resolve=>{
-      ugSubmit.onclick = ()=>{
-        const full_name = ugFullName.value.trim();
-        const mobile = ugMobile.value.trim();
-        const position = ugPosition.value.trim();
-
-        if(!full_name || !/^09\d{9}$/.test(mobile) || !position){
-          ugError.textContent = 'همه فیلدها رو درست پر کن';
-          ugError.classList.remove('ug-hidden');
-          return;
-        }
-        try{
-          localStorage.setItem('academy_profile_local', JSON.stringify({full_name, mobile, position, created_at: new Date().toISOString()}));
-        }catch(e){}
-        document.getElementById('userGate').classList.add('ug-hidden');
-        resolve();
-      };
-    });
-  }
-
-  // Check if already registered
-  const sel = await supabase
-    .from('users')
-    .select('full_name, mobile, position')
-    .eq('telegram_id', telegram_id)
-    .maybeSingle();
-
-  if (!sel.error && sel.data){
-    return; // already registered
-  }
-
-  // Show gate (if select failed, show a helpful message but still allow submit)
-  if (sel.error){
-    _ugShow('اتصال به دیتابیس مشکل دارد. بعد از وارد کردن اطلاعات، دوباره ذخیره می‌کنیم.');
-  } else {
-    _ugShow();
-  }
-
-  return new Promise(resolve=>{
-    ugSubmit.onclick = async ()=>{
-      const full_name = ugFullName.value.trim();
-      const mobile = ugMobile.value.trim();
-      const position = ugPosition.value.trim();
-
-      if(!full_name || !/^09\d{9}$/.test(mobile) || !position){
-        ugError.textContent = 'همه فیلدها رو درست پر کن';
-        ugError.classList.remove('ug-hidden');
-        return;
-      }
-
-      ugSubmit.disabled = true;
-
-      const up = await supabase
-        .from('users')
-        .upsert({ telegram_id, full_name, mobile, position }, { onConflict: 'telegram_id' });
-
-      ugSubmit.disabled = false;
-
-      if (up.error){
-        ugError.textContent = 'ذخیره اطلاعات انجام نشد. اینترنت/سطح دسترسی دیتابیس را چک کن و دوباره بزن.';
-        ugError.classList.remove('ug-hidden');
-        return;
-      }
-
-      document.getElementById('userGate').classList.add('ug-hidden');
-      resolve();
-    };
-  });
-}
-</script>
 
 </body>
 </html>
