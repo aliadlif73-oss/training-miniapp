@@ -594,33 +594,90 @@ white-space: nowrap;
       }
     }
 
-/* === User Gate === */
+/* === User Gate (One-time profile) === */
 .ug-backdrop{
-  position:fixed; inset:0; background:rgba(0,0,0,.6);
-  display:flex; align-items:center; justify-content:center;
-  z-index:999999;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.62);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999999;
+  padding: 16px;
 }
 .ug-card{
-  background:#fff; width:min(420px,92%);
-  border-radius:18px; padding:18px; direction:rtl;
+  width: min(440px, 100%);
+  background: #fff;
+  border-radius: 18px;
+  padding: 16px;
+  direction: rtl;
+  -webkit-font-smoothing: antialiased;
 }
-.ug-title{font-size:18px;font-weight:800;margin-bottom:6px;}
-.ug-sub{font-size:13px;opacity:.7;margin-bottom:12px;}
+.ug-title{font-size:18px;font-weight:800;margin:0 0 6px;}
+.ug-sub{font-size:13px;opacity:.72;margin:0 0 12px;line-height:1.6;}
 .ug-card input{
-  width:100%; height:44px; margin-bottom:10px;
-  border-radius:12px; border:1px solid #ccc; padding:0 12px;
+  width: 100%;
+  height: 46px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,.18);
+  padding: 0 12px;
+  font-size: 15px;
+  outline: none;
+  margin-bottom: 10px;
 }
-.ug-card button{
-  width:100%; height:46px; border:none; border-radius:14px;
-  background:#1976d2; color:#fff; font-weight:800;
+.ug-card input:focus{border-color: rgba(0,0,0,.45);}
+.ug-row{display:flex;gap:10px;}
+.ug-row > *{flex:1;}
+@media (max-width:420px){ .ug-row{flex-direction:column;} }
+.ug-actions{display:flex;gap:10px;margin-top:6px;}
+.ug-btn{
+  flex:1;
+  height: 46px;
+  border-radius: 14px;
+  border: none;
+  font-weight: 800;
+  font-size: 15px;
+  background: #1976d2;
+  color: #fff;
+  cursor: pointer;
 }
-.ug-error{color:#c62828;font-size:13px;margin-bottom:8px;}
+.ug-btn:disabled{opacity:.65;cursor:not-allowed;}
+.ug-error{
+  margin: 8px 0 2px;
+  background: rgba(198,40,40,.08);
+  border: 1px solid rgba(198,40,40,.18);
+  color: #b71c1c;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.6;
+}
 .ug-hidden{display:none!important;}
 
 </style>
 </head>
 
 <body>
+
+<!-- ====== USER FIRST-TIME GATE ====== -->
+<div id="userGate" class="ug-backdrop ug-hidden" aria-hidden="true">
+  <div class="ug-card" role="dialog" aria-modal="true" aria-labelledby="ugTitle">
+    <div class="ug-title" id="ugTitle">قبل از شروع</div>
+    <div class="ug-sub">نام و شماره و پوزیشن رو فقط یک‌بار ثبت کن تا گزارش‌ها دقیق بشن.</div>
+
+    <input id="ugFullName" placeholder="نام و نام خانوادگی" autocomplete="name" />
+    <input id="ugMobile" placeholder="شماره موبایل (09xxxxxxxxx)" inputmode="numeric" autocomplete="tel" />
+    <input id="ugPosition" placeholder="پوزیشن (مثلاً: بازاریاب)" autocomplete="organization-title" />
+
+    <div id="ugError" class="ug-error ug-hidden"></div>
+
+    <div class="ug-actions">
+      <button id="ugSubmit" class="ug-btn">ورود به آکادمی</button>
+    </div>
+  </div>
+</div>
+
+
   <div class="wrap">
     <div class="topbar">
       <!-- ✅ هدر جدید طبق خواسته شما -->
@@ -1581,98 +1638,138 @@ function setupTopbarAutoHide(){
    Boot
 ========================= */
 
-// ===== User Gate (only addition) =====
-
-async function _tgGetUserId(){
-  try{
-    const wa = window.Telegram?.WebApp;
-    const u = wa?.initDataUnsafe?.user;
-    if(u?.id) return u.id;
-    // wait a bit for iOS webview
-    for(let i=0;i<6;i++){
-      await new Promise(r=>setTimeout(r,250));
-      const uu = window.Telegram?.WebApp?.initDataUnsafe?.user;
-      if(uu?.id) return uu.id;
-    }
-  }catch(e){}
-  return null;
+<script>
+function __ugShow(msg){
+  const gate = document.getElementById('userGate');
+  const err = document.getElementById('ugError');
+  gate.classList.remove('ug-hidden');
+  gate.setAttribute('aria-hidden','false');
+  // prevent background scroll (iOS safe)
+  document.documentElement.style.overflow = 'hidden';
+  document.body.style.overflow = 'hidden';
+  if(msg){
+    err.textContent = msg;
+    err.classList.remove('ug-hidden');
+  } else {
+    err.classList.add('ug-hidden');
+  }
+}
+function __ugHide(){
+  const gate = document.getElementById('userGate');
+  gate.classList.add('ug-hidden');
+  gate.setAttribute('aria-hidden','true');
+  document.documentElement.style.overflow = '';
+  document.body.style.overflow = '';
+}
+function __ugValidMobile(m){
+  const x = String(m||'').replace(/\s|-/g,'').trim();
+  return /^09\d{9}$/.test(x);
+}
+async function __ugWaitTelegramId(timeoutMs=1800){
+  const start = Date.now();
+  try{ window.Telegram?.WebApp?.ready?.(); }catch(e){}
+  while(Date.now()-start < timeoutMs){
+    const id = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+    if(id) return id;
+    await new Promise(r=>setTimeout(r,120));
+  }
+  return window.Telegram?.WebApp?.initDataUnsafe?.user?.id || null;
 }
 
 async function ensureUserOnce(){
-  const telegram_id = await _tgGetUserId();
-  // If not in Telegram, don't block app; allow using the web view.
-  if(!telegram_id) return;
+  // We require Telegram ID to bind profile. If not available, show message.
+  const telegram_id = await __ugWaitTelegramId(2000);
 
+  if(!telegram_id){
+    __ugShow('این مینی‌اپ باید داخل تلگرام باز شود تا شناسه کاربر ثبت گردد.');
+    return new Promise(()=>{}); // block
+  }
+
+  // Check if user exists AND profile complete
   let existing = null;
   try{
-    const sel = await supabase
+    const resp = await supabase
       .from('users')
       .select('full_name, mobile, position')
       .eq('telegram_id', telegram_id)
       .maybeSingle();
-    existing = sel?.data || null;
-  }catch(e){ existing = null; }
+    existing = resp?.data || null;
 
-  const isComplete = existing &&
-    (existing.full_name||'').trim() &&
-    (existing.mobile||'').trim() &&
-    (existing.position||'').trim();
+    const isComplete = existing
+      && (existing.full_name||'').trim()
+      && (existing.mobile||'').trim()
+      && (existing.position||'').trim();
 
-  if(isComplete) return;
+    if(isComplete) return; // skip gate
 
-  const gate = document.getElementById('userGate');
-  const err = document.getElementById('ugError');
-  const btn = document.getElementById('ugSubmit');
+    // If query errored, we still show gate with a helpful message
+    if(resp?.error){
+      __ugShow('مشکل در بررسی پروفایل. احتمالاً RLS یا اینترنت. فرم رو پر کن و ثبت رو بزن؛ اگر باز خطا بود، متن خطا را بفرست.');
+    } else {
+      __ugShow();
+    }
+  }catch(e){
+    __ugShow('مشکل در اتصال به دیتابیس. اینترنت/فیلترشکن را چک کن و دوباره تلاش کن.');
+  }
 
-  // Prefill name from Telegram if available
+  // Prefill name from Telegram (nice UX)
   try{
     const u = window.Telegram?.WebApp?.initDataUnsafe?.user;
-    const nm = [u?.first_name, u?.last_name].filter(Boolean).join(' ').trim();
-    if(nm && !document.getElementById('ugFullName').value) document.getElementById('ugFullName').value = nm;
+    const tgName = [u?.first_name, u?.last_name].filter(Boolean).join(' ').trim();
+    if(tgName && !document.getElementById('ugFullName').value){
+      document.getElementById('ugFullName').value = tgName;
+    }
   }catch(e){}
 
-  gate.classList.remove('ug-hidden');
-
   return new Promise(resolve=>{
+    const btn = document.getElementById('ugSubmit');
     btn.onclick = async ()=>{
-      err.classList.add('ug-hidden');
       const full_name = document.getElementById('ugFullName').value.trim();
       const mobile = document.getElementById('ugMobile').value.trim();
       const position = document.getElementById('ugPosition').value.trim();
+      const err = document.getElementById('ugError');
 
-      if(!full_name || !/^09\d{9}$/.test(mobile) || !position){
-        err.textContent = 'هر سه فیلد را درست وارد کن (موبایل مثل 0912xxxxxxx)';
+      if(!full_name || !__ugValidMobile(mobile) || !position){
+        err.textContent = 'هر ۳ فیلد باید کامل باشد. موبایل مثل 0912xxxxxxx';
         err.classList.remove('ug-hidden');
         return;
       }
 
       btn.disabled = true;
-      btn.textContent = 'در حال ثبت...';
+      btn.textContent = 'در حال ثبت…';
 
-      const { error } = await supabase
-        .from('users')
-        .upsert({ telegram_id, full_name, mobile, position }, { onConflict: 'telegram_id' });
+      try{
+        const { error } = await supabase
+          .from('users')
+          .upsert({ telegram_id, full_name, mobile, position }, { onConflict: 'telegram_id' });
 
-      btn.disabled = false;
-      btn.textContent = 'ورود به آکادمی';
+        if(error){
+          err.textContent = 'ثبت انجام نشد: ' + (error.message || 'Unknown error');
+          err.classList.remove('ug-hidden');
+          btn.disabled = false;
+          btn.textContent = 'ورود به آکادمی';
+          return;
+        }
 
-      if(error){
-        err.textContent = 'ثبت اطلاعات ناموفق بود. اینترنت/دسترسی دیتابیس را چک کن.';
+        __ugHide();
+        btn.disabled = false;
+        btn.textContent = 'ورود به آکادمی';
+        resolve();
+      }catch(e){
+        err.textContent = 'ثبت انجام نشد (شبکه/دیتابیس): ' + (e?.message || e);
         err.classList.remove('ug-hidden');
-        return;
+        btn.disabled = false;
+        btn.textContent = 'ورود به آکادمی';
       }
-
-      gate.classList.add('ug-hidden');
-      resolve();
     };
   });
 }
-
+</script>
 
 (async () => {
-  
-  await ensureUserOnce();
-try{
+  try{
+    await ensureUserOnce();
+
     await refreshAll();
 
     const _selectCategory = selectCategory;
@@ -1700,21 +1797,5 @@ try{
   }
 })();
 </script>
-
-<!-- ====== USER FIRST-TIME GATE ====== -->
-<div id="userGate" class="ug-backdrop ug-hidden">
-  <div class="ug-card">
-    <div class="ug-title">قبل از شروع</div>
-    <div class="ug-sub">لطفاً اطلاعاتت رو فقط یک‌بار وارد کن</div>
-
-    <input id="ugFullName" placeholder="نام و نام خانوادگی" autocomplete="name" />
-    <input id="ugMobile" placeholder="شماره موبایل (09xxxxxxxxx)" inputmode="numeric" autocomplete="tel" />
-    <input id="ugPosition" placeholder="پوزیشن (مثلاً: بازاریاب)" autocomplete="organization-title" />
-
-    <div id="ugError" class="ug-error ug-hidden"></div>
-    <button id="ugSubmit">ورود به آکادمی</button>
-  </div>
-</div>
-
 </body>
 </html>
