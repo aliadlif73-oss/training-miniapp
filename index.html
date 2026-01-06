@@ -687,7 +687,7 @@ html { -webkit-text-size-adjust: 100%; }
           فایل را انتخاب کن؛ سیستم مدت را خودکار درمی‌آورد. اگر نشد، فیلد دستی فعال می‌شود.
         </div>
 
-        <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:12px; flex-wrap:wrap;">
+        <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:12px;">
           <button id="btnUpload" class="btnPrimary">آپلود و ثبت</button>
           <button id="btnAdminDownloadReport" class="btnGhost">دانلود گزارش اکسل</button>
         </div>
@@ -1441,116 +1441,87 @@ async function insertContentRow({title, type, category_key, file_url, duration_s
 }
 
 /* =========================
-   Admin Report Download (XLSX, Persian, REAL download in Telegram)
+   Admin Report Download (XLSX) - Telegram-safe
 ========================= */
-function _pad2(n){ return String(n).padStart(2,"0"); }
-function _stamp(){
-  const d = new Date();
-  return `${d.getFullYear()}-${_pad2(d.getMonth()+1)}-${_pad2(d.getDate())}_${_pad2(d.getHours())}-${_pad2(d.getMinutes())}`;
-}
-
-
 function safeAsciiName(name){
-  // keep only ASCII for Supabase Storage object key
-  const ascii = (name || "")
+  // Convert to a safe ASCII-ish filename for Storage keys
+  const base = (name || "academy_report")
+    .toString()
     .normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-zA-Z0-9._-]+/g, "_")
     .replace(/_+/g, "_")
-    .replace(/^_+|_+$/g, "");
-  return (ascii || "academy_report").slice(0, 120);
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 120);
+  return base || "academy_report";
 }
-
-function buildStorageKey(filename){
-  // always store with a safe key
-  const safe = safeAsciiName(filename);
-  return `reports/${Date.now()}_${safe}`;
+function nowStamp(){
+  const d = new Date();
+  const pad = (n)=> String(n).padStart(2,"0");
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${pad(d.getHours())}-${pad(d.getMinutes())}`;
 }
-
-async function uploadReportToStorage(filenameForStorage, blob){
-  const path = buildStorageKey(filenameForStorage);
-  const file = new File([blob], filenameForStorage, { type: blob.type || "application/octet-stream" });
+async function uploadReportBlobToStorage(blob){
+  // IMPORTANT: many Storage policies allow only "uploads/*" - so we keep this prefix
+  const safe = safeAsciiName(`academy_report_${nowStamp()}.xlsx`);
+  const path = `uploads/reports/${Date.now()}_${safe}`;
+  const file = new File([blob], safe, { type: blob.type || "application/octet-stream" });
 
   const { data, error } = await supabase
     .storage
     .from("training-media")
     .upload(path, file, { upsert: true, cacheControl: "60" });
 
-  if (error) throw new Error("Storage upload failed: " + error.message + " | key: " + path);
+  if (error) throw new Error("Storage upload failed: " + error.message);
 
   const { data: pub } = supabase.storage.from("training-media").getPublicUrl(data.path);
-  if (!pub?.publicUrl) throw new Error("No public URL for uploaded report");
-  return pub.publicUrl;
+  if (!pub?.publicUrl) throw new Error("Could not get public URL for report");
+  return { url: pub.publicUrl, filename: safe };
 }
-
-
-function tgDownloadFile(url, filename){
+function tgDownloadUrl(url, filename){
   const tg = window.Telegram?.WebApp;
-
-  // ✅ Native Telegram download (best)
   try{
     if (tg && typeof tg.downloadFile === "function"){
       tg.downloadFile({ url, file_name: filename }, () => {});
       return true;
     }
   }catch(e){}
-
-  // Fallback: open link in Telegram
   try{
     if (tg && typeof tg.openLink === "function"){
       tg.openLink(url);
       return true;
     }
   }catch(e){}
-
-  // Final fallback
   try{ window.open(url, "_blank"); }catch(e){}
-  return true;
+  return false;
 }
-
-function buildXlsxBlob(rows){
-  if (!window.XLSX) throw new Error("XLSX library not loaded");
-  const ws = XLSX.utils.json_to_sheet(rows || []);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "گزارش");
-  const ab = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-  return new Blob([ab], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
-}
-
-async function fetchUsersMapByTelegramIds(ids){
-  // optional: if RLS blocks, we'll just return empty map
-  const m = new Map();
-  try{
-    const uniq = Array.from(new Set((ids||[]).map(x => String(x)).filter(Boolean)));
-    const batchSize = 500;
-    for (let i=0; i<uniq.length; i+=batchSize){
-      const batch = uniq.slice(i, i+batchSize);
-      const { data, error } = await supabase
-        .from("users")
-        .select("telegram_id,full_name,mobile,job_title")
-        .in("telegram_id", batch);
-
-      if (error) break; // likely blocked by RLS
-      (data || []).forEach(u => m.set(String(u.telegram_id), u));
-    }
-  }catch(e){}
-  return m;
-}
-
-async function fetchAdminReportRows(){
-  const { data: pr, error } = await supabase
+async function fetchReportRowsPersian(){
+  // progress rows
+  const { data: pr, error: e1 } = await supabase
     .from("progress")
     .select("telegram_id,content_id,completion_percent,active_seconds,updated_at,last_position_seconds,duration_seconds")
     .order("updated_at", { ascending: false })
     .limit(10000);
-
-  if (error) throw new Error("خطا در خواندن progress: " + error.message);
+  if (e1) throw new Error(e1.message);
 
   const progressRows = pr || [];
-  if (!progressRows.length) return [];
+  if (!progressRows.length) return [{ "پیام": "دیتایی برای گزارش وجود ندارد." }];
 
-  const contentsMap = new Map((ALL_CONTENTS || []).map(c => [c.id, c]));
-  const usersMap = await fetchUsersMapByTelegramIds(progressRows.map(r => r.telegram_id));
+  // contents map (use ALL_CONTENTS if loaded)
+  const contentsArr = (Array.isArray(ALL_CONTENTS) && ALL_CONTENTS.length) ? ALL_CONTENTS : [];
+  const contentsMap = new Map(contentsArr.map(c => [c.id, c]));
+
+  // optional users map (ignore if blocked by RLS)
+  let usersMap = new Map();
+  try{
+    const ids = [...new Set(progressRows.map(r => String(r.telegram_id)).filter(Boolean))].slice(0, 2000);
+    const { data: us, error: e2 } = await supabase
+      .from("users")
+      .select("telegram_id,full_name,mobile,job_title")
+      .in("telegram_id", ids);
+    if (!e2 && Array.isArray(us)){
+      usersMap = new Map(us.map(u => [String(u.telegram_id), u]));
+    }
+  }catch(_){}
 
   const catName = (k) => {
     const found = CATEGORIES.find(x => x.key === k);
@@ -1562,7 +1533,6 @@ async function fetchAdminReportRows(){
     const tid = String(r.telegram_id || "");
     const u = usersMap.get(tid) || {};
     const c = contentsMap.get(r.content_id) || {};
-
     return {
       "آیدی تلگرام": tid,
       "نام و نام خانوادگی": u.full_name || "",
@@ -1579,23 +1549,28 @@ async function fetchAdminReportRows(){
     };
   });
 }
-
-async function adminDownloadReportXlsx(){
-  const stamp = formatTehranTimeISO();
-  // ✅ Storage key MUST be ASCII
-  const storageFilename = `academy_report_${stamp}.xlsx`;
-  // ✅ User-facing filename can be فارسی
-  const downloadFilename = `گزارش_آکادمی_${stamp}.xlsx`;
-
-  const rows = await fetchAdminReportRows();
-  const safeRows = (rows && rows.length) ? rows : [{ "پیام": "دیتایی برای گزارش وجود ندارد." }];
-
-  const blob = buildXlsxBlob(safeRows);
-
-  const url = await uploadReportToStorage(storageFilename, blob);
-  tgDownload(url, downloadFilename);
+function buildXlsxBlobFromJson(rows){
+  if (!window.XLSX) throw new Error("XLSX library not loaded");
+  const ws = XLSX.utils.json_to_sheet(rows || []);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "گزارش");
+  const ab = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+  return new Blob([ab], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
 }
+async function adminDownloadReportXlsx(){
+  const rows = await fetchReportRowsPersian();
+  const blob = buildXlsxBlobFromJson(rows);
 
+  // Upload then Telegram-native download
+  const { url, filename } = await uploadReportBlobToStorage(blob);
+
+  // Try Telegram download; also show a clickable link as last-resort fallback
+  const ok = tgDownloadUrl(url, filename);
+  if (!ok){
+    // fallback: show link in status
+    try{ showUploadStatus("لینک دانلود: " + url, false); }catch(e){}
+  }
+}
 
 function initAdminUpload(){
   const panel = $("adminUpload");
@@ -1679,26 +1654,21 @@ function initAdminUpload(){
     }
   });
 
-  // ✅ دکمه دانلود گزارش اکسل (فقط ادمین)
-  const btnDl = document.getElementById("btnAdminDownloadReport");
-  if (btnDl && !btnDl.dataset.bound){
-    btnDl.dataset.bound = "1";
-    btnDl.addEventListener("click", async () => {
-      if (window.__report_inflight) return;
-      window.__report_inflight = true;
-      btnDl.disabled = true;
+  // ✅ دانلود گزارش اکسل (ادمین) — دانلود واقعی در تلگرام
+  const __btnDL = $("btnAdminDownloadReport");
+  if (__btnDL && !__btnDL.dataset.bound){
+    __btnDL.dataset.bound = "1";
+    __btnDL.addEventListener("click", async () => {
       try{
-        showUploadStatus("در حال ساخت گزارش و آماده‌سازی دانلود...");
+        __btnDL.disabled = true;
+        showUploadStatus("در حال ساخت و آماده‌سازی گزارش...", false);
         await adminDownloadReportXlsx();
-        showUploadStatus("✅ پنجره دانلود تلگرام باید نمایش داده شود.");
+        showUploadStatus("اگر دانلود شروع نشد، چند ثانیه صبر کن یا از لینکِ نمایش‌داده‌شده استفاده کن.", false);
       }catch(e){
-        console.error("REPORT ERROR:", e);
-        const msg = (e?.message ? e.message : String(e));
+        const msg = (e && e.message) ? e.message : String(e);
         showUploadStatus("❌ خطا در دانلود گزارش: " + msg, true);
-        alert("خطا در دانلود گزارش: " + msg);
       }finally{
-        window.__report_inflight = false;
-        btnDl.disabled = false;
+        __btnDL.disabled = false;
       }
     });
   }
