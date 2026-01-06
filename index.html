@@ -1,4 +1,4 @@
-<!doctype html>
+<!doctype html><!doctype html>
 <html lang="fa" dir="rtl">
 <head>
   <meta charset="utf-8" />
@@ -593,6 +593,30 @@ white-space: nowrap;
         .playerModal{ background: #0b1220 !important; }
       }
     }
+
+/* === User Gate === */
+.ug-backdrop{
+  position:fixed; inset:0; background:rgba(0,0,0,.6);
+  display:flex; align-items:center; justify-content:center;
+  z-index:999999;
+}
+.ug-card{
+  background:#fff; width:min(420px,92%);
+  border-radius:18px; padding:18px; direction:rtl;
+}
+.ug-title{font-size:18px;font-weight:800;margin-bottom:6px;}
+.ug-sub{font-size:13px;opacity:.7;margin-bottom:12px;}
+.ug-card input{
+  width:100%; height:44px; margin-bottom:10px;
+  border-radius:12px; border:1px solid #ccc; padding:0 12px;
+}
+.ug-card button{
+  width:100%; height:46px; border:none; border-radius:14px;
+  background:#1976d2; color:#fff; font-weight:800;
+}
+.ug-error{color:#c62828;font-size:13px;margin-bottom:8px;}
+.ug-hidden{display:none!important;}
+
 </style>
 </head>
 
@@ -1585,5 +1609,63 @@ function setupTopbarAutoHide(){
   }
 })();
 </script>
+
+<!-- ====== USER FIRST-TIME GATE ====== -->
+<div id="userGate" class="ug-backdrop ug-hidden">
+  <div class="ug-card">
+    <div class="ug-title">قبل از شروع</div>
+    <div class="ug-sub">لطفاً اطلاعاتت رو فقط یک‌بار وارد کن</div>
+
+    <input id="ugFullName" placeholder="نام و نام خانوادگی" />
+    <input id="ugMobile" placeholder="شماره موبایل (09xxxxxxxxx)" inputmode="numeric" />
+    <input id="ugPosition" placeholder="پوزیشن (مثلاً: بازاریاب)" />
+
+    <div id="ugError" class="ug-error ug-hidden"></div>
+    <button id="ugSubmit">ورود به آکادمی</button>
+  </div>
+</div>
+
+
+<script>
+async function ensureUserOnce(){
+  const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+  if(!tgUser || !tgUser.id) return;
+
+  const telegram_id = tgUser.id;
+
+  const { data: existing } = await supabase
+    .from('users')
+    .select('telegram_id')
+    .eq('telegram_id', telegram_id)
+    .maybeSingle();
+
+  if(existing) return;
+
+  const gate = document.getElementById('userGate');
+  gate.classList.remove('ug-hidden');
+
+  return new Promise(resolve=>{
+    ugSubmit.onclick = async ()=>{
+      const full_name = ugFullName.value.trim();
+      const mobile = ugMobile.value.trim();
+      const position = ugPosition.value.trim();
+
+      if(!full_name || !/^09\d{9}$/.test(mobile) || !position){
+        ugError.textContent = 'همه فیلدها رو درست پر کن';
+        ugError.classList.remove('ug-hidden');
+        return;
+      }
+
+      await supabase.from('users').insert({
+        telegram_id, full_name, mobile, position
+      });
+
+      gate.classList.add('ug-hidden');
+      resolve();
+    };
+  });
+}
+</script>
+
 </body>
 </html>
