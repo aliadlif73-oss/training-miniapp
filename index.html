@@ -1449,25 +1449,40 @@ function _stamp(){
   return `${d.getFullYear()}-${_pad2(d.getMonth()+1)}-${_pad2(d.getDate())}_${_pad2(d.getHours())}-${_pad2(d.getMinutes())}`;
 }
 
-async function uploadReportToStorage(filename, blob){
-  const path = `reports/${Date.now()}_${filename}`;
-  const file = new File([blob], filename, { type: blob.type || "application/octet-stream" });
+
+function safeAsciiName(name){
+  // keep only ASCII for Supabase Storage object key
+  const ascii = (name || "")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9._-]+/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_+|_+$/g, "");
+  return (ascii || "academy_report").slice(0, 120);
+}
+
+function buildStorageKey(filename){
+  // always store with a safe key
+  const safe = safeAsciiName(filename);
+  return `reports/${Date.now()}_${safe}`;
+}
+
+async function uploadReportToStorage(filenameForStorage, blob){
+  const path = buildStorageKey(filenameForStorage);
+  const file = new File([blob], filenameForStorage, { type: blob.type || "application/octet-stream" });
 
   const { data, error } = await supabase
     .storage
     .from("training-media")
-    .upload(path, file, {
-      upsert: true,
-      cacheControl: "60",
-      contentType: blob.type || "application/octet-stream"
-    });
+    .upload(path, file, { upsert: true, cacheControl: "60" });
 
-  if (error) throw new Error("Storage upload failed: " + error.message);
+  if (error) throw new Error("Storage upload failed: " + error.message + " | key: " + path);
 
   const { data: pub } = supabase.storage.from("training-media").getPublicUrl(data.path);
-  if (!pub?.publicUrl) throw new Error("No public URL for report");
+  if (!pub?.publicUrl) throw new Error("No public URL for uploaded report");
   return pub.publicUrl;
 }
+
 
 function tgDownloadFile(url, filename){
   const tg = window.Telegram?.WebApp;
@@ -1566,16 +1581,19 @@ async function fetchAdminReportRows(){
 }
 
 async function adminDownloadReportXlsx(){
-  const filename = `گزارش_آکادمی_${_stamp()}.xlsx`;
+  const stamp = formatTehranTimeISO();
+  // ✅ Storage key MUST be ASCII
+  const storageFilename = `academy_report_${stamp}.xlsx`;
+  // ✅ User-facing filename can be فارسی
+  const downloadFilename = `گزارش_آکادمی_${stamp}.xlsx`;
 
   const rows = await fetchAdminReportRows();
-  const safeRows = rows.length ? rows : [{ "پیام": "دیتایی برای گزارش وجود ندارد." }];
+  const safeRows = (rows && rows.length) ? rows : [{ "پیام": "دیتایی برای گزارش وجود ندارد." }];
 
   const blob = buildXlsxBlob(safeRows);
 
-  // Telegram WebView blob download is unreliable. Upload -> HTTPS -> tg.downloadFile
-  const url = await uploadReportToStorage(filename, blob);
-  tgDownloadFile(url, filename);
+  const url = await uploadReportToStorage(storageFilename, blob);
+  tgDownload(url, downloadFilename);
 }
 
 
