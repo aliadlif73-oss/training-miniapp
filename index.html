@@ -1621,9 +1621,8 @@ async function ensureUserOnce(){
       .maybeSingle();
 
     if(selErr){
-      // If we can't read, don't brick the app; just continue
       console.warn('users select error', selErr);
-      return;
+      // اگر خواندن از دیتابیس خطا داد، باز هم فرم را نشان بده تا ثبت انجام شود
     }
 
     const isComplete = existing &&
