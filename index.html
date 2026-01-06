@@ -1493,8 +1493,7 @@ function initAdminUpload(){
 
       showUploadStatus("✅ ثبت شد. در حال ریفرش لیست...");
       try{ renderCategories(); }catch(e){}
-    await await ensureUserOnce();
-      refreshAll();
+    await refreshAll();
     try{ setupTopbarAutoHide(); }catch(e){}
 
     $("upTitle").value = "";
@@ -1568,34 +1567,6 @@ function setupTopbarAutoHide(){
 /* =========================
    Boot
 ========================= */
-(async () => {
-  try{
-    await refreshAll();
-
-    const _selectCategory = selectCategory;
-    selectCategory = async (key) => {
-      CURRENT_CATEGORY = key;
-
-      const ids = ALL_CONTENTS
-        .filter(c => getContentCategoryKey(c) === key)
-        .map(c => c.id);
-
-      try{ await loadLikesForContents(ids); } catch(e){ console.error(e); }
-      try{ await loadEngagementAllUsers(ids); } catch(e){ console.error(e); }
-
-      _selectCategory(key);
-    };
-  }catch(e){
-    console.error(e);
-    try{ renderCategories(); }catch(_e){}
-    const g = $("catGrid");
-    if (g){
-      g.innerHTML = `<div class="card empty">خطا در بارگذاری. اتصال Supabase/اینترنت را بررسی کنید. اگر هیچ تغییری نمی‌بینی، لینک منوبوتن را با ?v=123 عوض کن تا کش تلگرام بشکند.</div>`;
-    } else {
-      showFatal("خطا: catGrid پیدا نشد");
-    }
-  }
-})();
 
 
 // ====== USER GATE (safe patch) ======
@@ -1669,6 +1640,35 @@ async function ensureUserOnce(){
   }
 }
 
+(async () => {
+  try{
+    await ensureUserOnce();
+    await refreshAll();
+
+    const _selectCategory = selectCategory;
+    selectCategory = async (key) => {
+      CURRENT_CATEGORY = key;
+
+      const ids = ALL_CONTENTS
+        .filter(c => getContentCategoryKey(c) === key)
+        .map(c => c.id);
+
+      try{ await loadLikesForContents(ids); } catch(e){ console.error(e); }
+      try{ await loadEngagementAllUsers(ids); } catch(e){ console.error(e); }
+
+      _selectCategory(key);
+    };
+  }catch(e){
+    console.error(e);
+    try{ renderCategories(); }catch(_e){}
+    const g = $("catGrid");
+    if (g){
+      g.innerHTML = `<div class="card empty">خطا در بارگذاری. اتصال Supabase/اینترنت را بررسی کنید. اگر هیچ تغییری نمی‌بینی، لینک منوبوتن را با ?v=123 عوض کن تا کش تلگرام بشکند.</div>`;
+    } else {
+      showFatal("خطا: catGrid پیدا نشد");
+    }
+  }
+})();
 </script>
 
 <!-- ====== USER FIRST-TIME GATE ====== -->
