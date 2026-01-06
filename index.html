@@ -7,9 +7,9 @@
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap" rel="stylesheet">
 
@@ -687,12 +687,9 @@ html { -webkit-text-size-adjust: 100%; }
           فایل را انتخاب کن؛ سیستم مدت را خودکار درمی‌آورد. اگر نشد، فیلد دستی فعال می‌شود.
         </div>
 
-        <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:12px;">
+        <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:12px; flex-wrap:wrap;">
           <button id="btnUpload" class="btnPrimary">آپلود و ثبت</button>
-        </div>
-
-        <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:10px;">
-          <button id="btnDownloadReport" class="btnGhost">دانلود گزارش اکسل</button>
+          <button id="btnAdminDownloadReport" class="btnGhost">دانلود گزارش اکسل</button>
         </div>
 
         <div class="hint" id="upStatus" style="margin-top:10px; display:none;"></div>
@@ -1442,6 +1439,146 @@ async function insertContentRow({title, type, category_key, file_url, duration_s
     created_at: new Date().toISOString()
   }], false);
 }
+
+/* =========================
+   Admin Report Download (XLSX, Persian, REAL download in Telegram)
+========================= */
+function _pad2(n){ return String(n).padStart(2,"0"); }
+function _stamp(){
+  const d = new Date();
+  return `${d.getFullYear()}-${_pad2(d.getMonth()+1)}-${_pad2(d.getDate())}_${_pad2(d.getHours())}-${_pad2(d.getMinutes())}`;
+}
+
+async function uploadReportToStorage(filename, blob){
+  const path = `reports/${Date.now()}_${filename}`;
+  const file = new File([blob], filename, { type: blob.type || "application/octet-stream" });
+
+  const { data, error } = await supabase
+    .storage
+    .from("training-media")
+    .upload(path, file, {
+      upsert: true,
+      cacheControl: "60",
+      contentType: blob.type || "application/octet-stream"
+    });
+
+  if (error) throw new Error("Storage upload failed: " + error.message);
+
+  const { data: pub } = supabase.storage.from("training-media").getPublicUrl(data.path);
+  if (!pub?.publicUrl) throw new Error("No public URL for report");
+  return pub.publicUrl;
+}
+
+function tgDownloadFile(url, filename){
+  const tg = window.Telegram?.WebApp;
+
+  // ✅ Native Telegram download (best)
+  try{
+    if (tg && typeof tg.downloadFile === "function"){
+      tg.downloadFile({ url, file_name: filename }, () => {});
+      return true;
+    }
+  }catch(e){}
+
+  // Fallback: open link in Telegram
+  try{
+    if (tg && typeof tg.openLink === "function"){
+      tg.openLink(url);
+      return true;
+    }
+  }catch(e){}
+
+  // Final fallback
+  try{ window.open(url, "_blank"); }catch(e){}
+  return true;
+}
+
+function buildXlsxBlob(rows){
+  if (!window.XLSX) throw new Error("XLSX library not loaded");
+  const ws = XLSX.utils.json_to_sheet(rows || []);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "گزارش");
+  const ab = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+  return new Blob([ab], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+}
+
+async function fetchUsersMapByTelegramIds(ids){
+  // optional: if RLS blocks, we'll just return empty map
+  const m = new Map();
+  try{
+    const uniq = Array.from(new Set((ids||[]).map(x => String(x)).filter(Boolean)));
+    const batchSize = 500;
+    for (let i=0; i<uniq.length; i+=batchSize){
+      const batch = uniq.slice(i, i+batchSize);
+      const { data, error } = await supabase
+        .from("users")
+        .select("telegram_id,full_name,mobile,job_title")
+        .in("telegram_id", batch);
+
+      if (error) break; // likely blocked by RLS
+      (data || []).forEach(u => m.set(String(u.telegram_id), u));
+    }
+  }catch(e){}
+  return m;
+}
+
+async function fetchAdminReportRows(){
+  const { data: pr, error } = await supabase
+    .from("progress")
+    .select("telegram_id,content_id,completion_percent,active_seconds,updated_at,last_position_seconds,duration_seconds")
+    .order("updated_at", { ascending: false })
+    .limit(10000);
+
+  if (error) throw new Error("خطا در خواندن progress: " + error.message);
+
+  const progressRows = pr || [];
+  if (!progressRows.length) return [];
+
+  const contentsMap = new Map((ALL_CONTENTS || []).map(c => [c.id, c]));
+  const usersMap = await fetchUsersMapByTelegramIds(progressRows.map(r => r.telegram_id));
+
+  const catName = (k) => {
+    const found = CATEGORIES.find(x => x.key === k);
+    return found ? found.title : (k || "—");
+  };
+  const typeFa = (t) => t === "video" ? "ویدیو" : "پادکست";
+
+  return progressRows.map(r => {
+    const tid = String(r.telegram_id || "");
+    const u = usersMap.get(tid) || {};
+    const c = contentsMap.get(r.content_id) || {};
+
+    return {
+      "آیدی تلگرام": tid,
+      "نام و نام خانوادگی": u.full_name || "",
+      "موبایل": u.mobile || "",
+      "پوزیشن": u.job_title || "",
+      "عنوان محتوا": c.title || "",
+      "دسته": catName(c.category_key),
+      "نوع": typeFa(c.type),
+      "درصد تکمیل": Number(r.completion_percent || 0),
+      "ثانیه مصرف": Number(r.active_seconds || 0),
+      "مدت محتوا (ثانیه)": Number(r.duration_seconds || 0),
+      "آخرین موقعیت (ثانیه)": Number(r.last_position_seconds || 0),
+      "آخرین آپدیت": r.updated_at || ""
+    };
+  });
+}
+
+async function adminDownloadReportXlsx(){
+  const filename = `گزارش_آکادمی_${_stamp()}.xlsx`;
+
+  const rows = await fetchAdminReportRows();
+  const safeRows = rows.length ? rows : [{ "پیام": "دیتایی برای گزارش وجود ندارد." }];
+
+  const blob = buildXlsxBlob(safeRows);
+
+  // Telegram WebView blob download is unreliable. Upload -> HTTPS -> tg.downloadFile
+  const url = await uploadReportToStorage(filename, blob);
+  tgDownloadFile(url, filename);
+}
+
+
 function initAdminUpload(){
   const panel = $("adminUpload");
   if (!panel) return;
@@ -1524,92 +1661,29 @@ function initAdminUpload(){
     }
   });
 
-  // ===== Admin Report Download (Excel-ready) =====
-  $("btnDownloadReport")?.addEventListener("click", async () => {
-    if (window.__report_inflight) return;
-    window.__report_inflight = true;
-    const btn = $("btnDownloadReport");
-    if (btn) btn.disabled = true;
-
-    try{
-      showUploadStatus("در حال آماده‌سازی گزارش...", false);
-
-      // 1) Load users (optional but helpful)
-      let usersMap = new Map();
+  // ✅ دکمه دانلود گزارش اکسل (فقط ادمین)
+  const btnDl = document.getElementById("btnAdminDownloadReport");
+  if (btnDl && !btnDl.dataset.bound){
+    btnDl.dataset.bound = "1";
+    btnDl.addEventListener("click", async () => {
+      if (window.__report_inflight) return;
+      window.__report_inflight = true;
+      btnDl.disabled = true;
       try{
-        const users = await sGet("users?select=telegram_id,full_name,mobile,job_title&limit=5000");
-        (users||[]).forEach(u => usersMap.set(String(u.telegram_id), u));
-      }catch(e){ /* اگر RLS اجازه نده، گزارش بدون مشخصات هم کار می‌کند */ }
-
-      // 2) Load progress rows
-      const rows = await sGet("progress?select=telegram_id,content_id,completion_percent,active_seconds,updated_at,last_position_seconds,duration_seconds&order=updated_at.desc&limit=5000");
-
-      // 3) Map contents from already loaded ALL_CONTENTS
-      const contentsMap = new Map();
-      (ALL_CONTENTS||[]).forEach(c => contentsMap.set(Number(c.id), c));
-
-      const report = (rows||[]).map(r => {
-        const u = usersMap.get(String(r.telegram_id)) || {};
-        const c = contentsMap.get(Number(r.content_id)) || {};
-        return {
-          telegram_id: r.telegram_id,
-          full_name: u.full_name || "",
-          mobile: u.mobile || "",
-          job_title: u.job_title || "",
-          title: c.title || "",
-          category_key: c.category_key || "",
-          type: c.type || "",
-          completion_percent: r.completion_percent ?? "",
-          active_seconds: r.active_seconds ?? "",
-          last_position_seconds: r.last_position_seconds ?? "",
-          duration_seconds: r.duration_seconds ?? "",
-          updated_at: r.updated_at || ""
-        };
-      });
-
-      if (!report.length){
-        showUploadStatus("گزارشی پیدا نشد.", true);
-        return;
+        showUploadStatus("در حال ساخت گزارش و آماده‌سازی دانلود...");
+        await adminDownloadReportXlsx();
+        showUploadStatus("✅ پنجره دانلود تلگرام باید نمایش داده شود.");
+      }catch(e){
+        console.error("REPORT ERROR:", e);
+        const msg = (e?.message ? e.message : String(e));
+        showUploadStatus("❌ خطا در دانلود گزارش: " + msg, true);
+        alert("خطا در دانلود گزارش: " + msg);
+      }finally{
+        window.__report_inflight = false;
+        btnDl.disabled = false;
       }
-
-      // Prefer XLSX (best for Persian/Excel)
-      const stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,"-");
-      const filename = `academy_report_${stamp}.xlsx`;
-
-      if (window.XLSX){
-        const ws = XLSX.utils.json_to_sheet(report);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "report");
-        XLSX.writeFile(wb, filename);
-        showUploadStatus("✅ گزارش دانلود شد.", false);
-      } else {
-        // Fallback: CSV with BOM
-        const headers = Object.keys(report[0]);
-        const esc = (v) => {
-          const s = (v ?? "").toString().replace(/"/g,'""');
-          return /[,"\n]/.test(s) ? `"${s}"` : s;
-        };
-        const csv = [headers.join(","), ...report.map(r => headers.map(h => esc(r[h])).join(","))].join("\n");
-        const blob = new Blob(["\\ufeff" + csv], { type: "text/csv;charset=utf-8" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `academy_report_${stamp}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
-        showUploadStatus("✅ گزارش دانلود شد (CSV).", false);
-      }
-    }catch(e){
-      console.error("REPORT ERROR:", e);
-      showUploadStatus("❌ خطا در ساخت گزارش: " + (e?.message || e), true);
-    } finally {
-      window.__report_inflight = false;
-      const btn2 = $("btnDownloadReport");
-      if (btn2) btn2.disabled = false;
-    }
-  });
+    });
+  }
 
 }
 
