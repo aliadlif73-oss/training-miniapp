@@ -7,6 +7,7 @@
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -688,6 +689,7 @@ html { -webkit-text-size-adjust: 100%; }
 
         <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:12px;">
           <button id="btnUpload" class="btnPrimary">آپلود و ثبت</button>
+          <button id="btnAdminDownloadReport" class="btnGhost">دانلود گزارش اکسل</button>
         </div>
 
         <div class="hint" id="upStatus" style="margin-top:10px; display:none;"></div>
@@ -925,7 +927,7 @@ let continueItem = null;
    Progress / Likes loaders
 ========================= */
 async function loadMyProgress(){
-  const rows = await sGet(`progress?select=content_id,last_position_seconds,max_position_seconds,completion_percent,active_seconds,updated_at,duration_seconds&telegram_id=eq.${encodeURIComponent(TELEGRAM_ID)}&limit=5000`);
+  const rows = await sGet(`progress?select=content_id,last_position_seconds,completion_percent,updated_at,duration_seconds&telegram_id=eq.${encodeURIComponent(TELEGRAM_ID)}&limit=5000`);
   progressByContent = new Map();
   rows.forEach(r => progressByContent.set(r.content_id, r));
 }
@@ -1284,83 +1286,50 @@ const p = progressByContent.get(content.id);
     if (lastPos > 0 && lastPos < (media.duration || 999999)) {
       media.currentTime = lastPos;
     }
-    // init lastCT for accurate deltas
-    lastCT = Number(media.currentTime || 0);
     updateUI(media.currentTime);
   });
 
-  // ===== Professional progress tracking =====
-  // - watchedSeconds grows only when media is actually playing forward (anti-seek)
-  // - maxPos grows only with real playback (keeps 100% even if user restarts)
-  const prevProg = progressByContent.get(content.id) || {};
-  let watchedSeconds = Number(prevProg.active_seconds || 0);
-  let maxPos = Number(prevProg.max_position_seconds || prevProg.last_position_seconds || 0);
-  let lastCT = 0;
   let lastSentAt = 0;
 
-  function updateWatch() {
-    try{
-      const ct = Number(media.currentTime || 0);
-      if (!Number.isFinite(ct)) return;
-      if (media.paused || media.seeking) { lastCT = ct; return; }
-
-      // delta in seconds (based on media time, not wall clock)
-      const d = ct - (lastCT || ct);
-      // only count small forward deltas as "real watch" (seeking jumps ignored)
-      if (d > 0 && d < 2.5) {
-        watchedSeconds = Math.min(duration || 0, watchedSeconds + d);
-        maxPos = Math.max(maxPos, Math.floor(ct));
-      }
-      lastCT = ct;
-    }catch(e){}
-  }
-
   async function saveNow(force=false){
-  // update watch counters before saving
-  updateWatch();
-
-  const pos = Math.floor(media.currentTime || 0);
-  const pct = (!duration || duration <= 0) ? 0 : Math.min(100, (watchedSeconds / duration) * 100);
-
-  updateUI(media.currentTime);
-
-  try{
-    await sPost("progress", [{
-      telegram_id: TELEGRAM_ID,
-      content_id: content.id,
-      last_position_seconds: pos,
-      max_position_seconds: Math.max(maxPos, pos), // safety
-      duration_seconds: duration || 0,
-      completion_percent: Number(pct.toFixed(2)),
-      active_seconds: Math.floor(watchedSeconds || 0),
-      updated_at: new Date().toISOString()
-    }], true);
+    const pos = Math.floor(media.currentTime || 0);
+    const pct = calcPercent(pos, duration);
+    updateUI(media.currentTime);
 
     try{
-      await sPost("listen_events", [{
+      await sPost("progress", [{
         telegram_id: TELEGRAM_ID,
         content_id: content.id,
-        event_time: new Date().toISOString(),
-        position_seconds: pos,
-        event_type: force ? "pause_or_end" : "progress"
-      }], false);
+        last_position_seconds: pos,
+        max_position_seconds: pos,
+        duration_seconds: duration || 0,
+        completion_percent: Number(pct.toFixed(2)),
+        active_seconds: pos,
+        updated_at: new Date().toISOString()
+      }], true);
+
+      try{
+        await sPost("listen_events", [{
+          telegram_id: TELEGRAM_ID,
+          content_id: content.id,
+          event_time: new Date().toISOString(),
+          position_seconds: pos,
+          event_type: force ? "pause_or_end" : "progress"
+        }], false);
+      }catch(e){ console.error(e); }
+
+      progressByContent.set(content.id, {
+        content_id: content.id,
+        last_position_seconds: pos,
+        completion_percent: Number(pct.toFixed(2)),
+        updated_at: new Date().toISOString(),
+        duration_seconds: duration || 0
+      });
+      updateOverallProgress();
     }catch(e){ console.error(e); }
+  }
 
-    progressByContent.set(content.id, {
-      content_id: content.id,
-      last_position_seconds: pos,
-      max_position_seconds: Math.max(maxPos, pos),
-      completion_percent: Number(pct.toFixed(2)),
-      active_seconds: Math.floor(watchedSeconds || 0),
-      updated_at: new Date().toISOString(),
-      duration_seconds: duration || 0
-    });
-    updateOverallProgress();
-  }catch(e){ console.error(e); }
-}
-
-media.addEventListener("timeupdate", () => {
-, () => {
+  media.addEventListener("timeupdate", () => {
     updateUI(media.currentTime);
     if (Math.abs(media.currentTime - lastSentAt) >= 10) {
       lastSentAt = media.currentTime;
@@ -1370,13 +1339,7 @@ media.addEventListener("timeupdate", () => {
 
   media.addEventListener("pause", () => saveNow(true));
   media.addEventListener("ended", () => {
-    // force complete on real end
-    try{
-      const endPos = duration || media.duration || 0;
-      media.currentTime = endPos;
-      watchedSeconds = Math.max(watchedSeconds, endPos);
-      maxPos = Math.max(maxPos, Math.floor(endPos));
-    }catch(e){}
+    media.currentTime = duration || media.duration || 0;
     saveNow(true);
   });
 
@@ -1476,6 +1439,139 @@ async function insertContentRow({title, type, category_key, file_url, duration_s
     created_at: new Date().toISOString()
   }], false);
 }
+
+/* =========================
+   Admin Report Download (XLSX) - Telegram-safe
+========================= */
+function safeAsciiName(name){
+  // Convert to a safe ASCII-ish filename for Storage keys
+  const base = (name || "academy_report")
+    .toString()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9._-]+/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 120);
+  return base || "academy_report";
+}
+function nowStamp(){
+  const d = new Date();
+  const pad = (n)=> String(n).padStart(2,"0");
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${pad(d.getHours())}-${pad(d.getMinutes())}`;
+}
+async function uploadReportBlobToStorage(blob){
+  // IMPORTANT: many Storage policies allow only "uploads/*" - so we keep this prefix
+  const safe = safeAsciiName(`academy_report_${nowStamp()}.xlsx`);
+  const path = `uploads/reports/${Date.now()}_${safe}`;
+  const file = new File([blob], safe, { type: blob.type || "application/octet-stream" });
+
+  const { data, error } = await supabase
+    .storage
+    .from("training-media")
+    .upload(path, file, { upsert: true, cacheControl: "60" });
+
+  if (error) throw new Error("Storage upload failed: " + error.message);
+
+  const { data: pub } = supabase.storage.from("training-media").getPublicUrl(data.path);
+  if (!pub?.publicUrl) throw new Error("Could not get public URL for report");
+  return { url: pub.publicUrl, filename: safe };
+}
+function tgDownloadUrl(url, filename){
+  const tg = window.Telegram?.WebApp;
+  try{
+    if (tg && typeof tg.downloadFile === "function"){
+      tg.downloadFile({ url, file_name: filename }, () => {});
+      return true;
+    }
+  }catch(e){}
+  try{
+    if (tg && typeof tg.openLink === "function"){
+      tg.openLink(url);
+      return true;
+    }
+  }catch(e){}
+  try{ window.open(url, "_blank"); }catch(e){}
+  return false;
+}
+async function fetchReportRowsPersian(){
+  // progress rows
+  const { data: pr, error: e1 } = await supabase
+    .from("progress")
+    .select("telegram_id,content_id,completion_percent,active_seconds,updated_at,last_position_seconds,duration_seconds")
+    .order("updated_at", { ascending: false })
+    .limit(10000);
+  if (e1) throw new Error(e1.message);
+
+  const progressRows = pr || [];
+  if (!progressRows.length) return [{ "پیام": "دیتایی برای گزارش وجود ندارد." }];
+
+  // contents map (use ALL_CONTENTS if loaded)
+  const contentsArr = (Array.isArray(ALL_CONTENTS) && ALL_CONTENTS.length) ? ALL_CONTENTS : [];
+  const contentsMap = new Map(contentsArr.map(c => [c.id, c]));
+
+  // optional users map (ignore if blocked by RLS)
+  let usersMap = new Map();
+  try{
+    const ids = [...new Set(progressRows.map(r => String(r.telegram_id)).filter(Boolean))].slice(0, 2000);
+    const { data: us, error: e2 } = await supabase
+      .from("users")
+      .select("telegram_id,full_name,mobile,job_title")
+      .in("telegram_id", ids);
+    if (!e2 && Array.isArray(us)){
+      usersMap = new Map(us.map(u => [String(u.telegram_id), u]));
+    }
+  }catch(_){}
+
+  const catName = (k) => {
+    const found = CATEGORIES.find(x => x.key === k);
+    return found ? found.title : (k || "—");
+  };
+  const typeFa = (t) => t === "video" ? "ویدیو" : "پادکست";
+
+  return progressRows.map(r => {
+    const tid = String(r.telegram_id || "");
+    const u = usersMap.get(tid) || {};
+    const c = contentsMap.get(r.content_id) || {};
+    return {
+      "آیدی تلگرام": tid,
+      "نام و نام خانوادگی": u.full_name || "",
+      "موبایل": u.mobile || "",
+      "پوزیشن": u.job_title || "",
+      "عنوان محتوا": c.title || "",
+      "دسته": catName(c.category_key),
+      "نوع": typeFa(c.type),
+      "درصد تکمیل": Number(r.completion_percent || 0),
+      "ثانیه مصرف": Number(r.active_seconds || 0),
+      "مدت محتوا (ثانیه)": Number(r.duration_seconds || 0),
+      "آخرین موقعیت (ثانیه)": Number(r.last_position_seconds || 0),
+      "آخرین آپدیت": r.updated_at || ""
+    };
+  });
+}
+function buildXlsxBlobFromJson(rows){
+  if (!window.XLSX) throw new Error("XLSX library not loaded");
+  const ws = XLSX.utils.json_to_sheet(rows || []);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "گزارش");
+  const ab = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+  return new Blob([ab], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+}
+async function adminDownloadReportXlsx(){
+  const rows = await fetchReportRowsPersian();
+  const blob = buildXlsxBlobFromJson(rows);
+
+  // Upload then Telegram-native download
+  const { url, filename } = await uploadReportBlobToStorage(blob);
+
+  // Try Telegram download; also show a clickable link as last-resort fallback
+  const ok = tgDownloadUrl(url, filename);
+  if (!ok){
+    // fallback: show link in status
+    try{ showUploadStatus("لینک دانلود: " + url, false); }catch(e){}
+  }
+}
+
 function initAdminUpload(){
   const panel = $("adminUpload");
   if (!panel) return;
@@ -1557,6 +1653,26 @@ function initAdminUpload(){
       if (__btn2) __btn2.disabled = false;
     }
   });
+
+  // ✅ دانلود گزارش اکسل (ادمین) — دانلود واقعی در تلگرام
+  const __btnDL = $("btnAdminDownloadReport");
+  if (__btnDL && !__btnDL.dataset.bound){
+    __btnDL.dataset.bound = "1";
+    __btnDL.addEventListener("click", async () => {
+      try{
+        __btnDL.disabled = true;
+        showUploadStatus("در حال ساخت و آماده‌سازی گزارش...", false);
+        await adminDownloadReportXlsx();
+        showUploadStatus("اگر دانلود شروع نشد، چند ثانیه صبر کن یا از لینکِ نمایش‌داده‌شده استفاده کن.", false);
+      }catch(e){
+        const msg = (e && e.message) ? e.message : String(e);
+        showUploadStatus("❌ خطا در دانلود گزارش: " + msg, true);
+      }finally{
+        __btnDL.disabled = false;
+      }
+    });
+  }
+
 }
 
 /* =========================
