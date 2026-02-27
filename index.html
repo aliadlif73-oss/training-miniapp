@@ -336,26 +336,6 @@ box-shadow: 0 1px 0 rgba(0,0,0,.02);
       gap: 8px;
       align-items:center;
 }
-
-    .shareBtn{
-      touch-action: manipulation;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,.50);
-      color: var(--text);
-      padding: 10px 12px;
-      border-radius: 16px;
-      cursor:pointer;
-      font-family: inherit;
-      font-weight: 800;
-      display:inline-flex;
-      gap:8px;
-      align-items:center;
-      transition: transform .1s ease, background .2s ease;
-      user-select:none;
-      white-space:nowrap;
-    }
-    .shareBtn:active{ transform: scale(.98); }
-
     @media (prefers-color-scheme: dark){
       .likeBtn{
       touch-action: manipulation; background: rgba(255,255,255,.04); }
@@ -759,6 +739,76 @@ const SUPABASE_URL = "https://szjwrqzgiekjaggqsuoh.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_hkKIc6r7pSDCJsUvoOafrg_vK8xQc0F";
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+
+// =========================
+// Deep link + Share (Send)
+// =========================
+const BOT_USERNAME = "seylaneh_academy_bot";
+const MINIAPP_SHORTNAME = "app"; // اگر short name مینی‌اپت چیز دیگری است، فقط همین را تغییر بده
+
+function getStartParam(){
+  const tg = window.Telegram?.WebApp;
+  const raw = tg?.initDataUnsafe?.start_param || tg?.initDataUnsafe?.startapp || "";
+  return (raw || "").toString().trim();
+}
+function parseContentIdFromStartParam(sp){
+  // Accept: cid_123 , content_123 , 123
+  const m = (sp || "").match(/(\d+)/);
+  return m ? Number(m[1]) : null;
+}
+function setPendingContentId(id){
+  if(!id) return;
+  try{ sessionStorage.setItem("pending_content_id", String(id)); }catch(e){}
+}
+function consumePendingContentId(){
+  try{
+    const v = sessionStorage.getItem("pending_content_id");
+    if(!v) return null;
+    sessionStorage.removeItem("pending_content_id");
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  }catch(e){ return null; }
+}
+function buildDeepLink(contentId){
+  return `https://t.me/${BOT_USERNAME}/${MINIAPP_SHORTNAME}?startapp=cid_${contentId}`;
+}
+async function copyToClipboard(text){
+  try{
+    if(navigator.clipboard?.writeText){
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  }catch(e){}
+  // fallback
+  try{
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    document.execCommand("copy");
+    ta.remove();
+    return true;
+  }catch(e){ return false; }
+}
+async function sendContent(contentId, title){
+  const link = buildDeepLink(contentId);
+  const message = `🎧 ${title}\n\nورود مستقیم به همین قسمت:\n${link}`;
+  const tg = window.Telegram?.WebApp;
+
+  // Prefer Telegram share UI
+  if(tg?.openTelegramLink){
+    // Using Telegram share URL (opens share sheet / chat picker)
+    tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent("🎧 " + title)}`);
+    return;
+  }
+
+  // Fallback: copy link/message
+  const ok = await copyToClipboard(message);
+  alert(ok ? "لینک برای ارسال کپی شد ✅" : message);
+}
 /* =========================
    Telegram
 ========================= */
@@ -783,104 +833,6 @@ function resolveUserId() {
   return "web_preview";
 }
 const TELEGRAM_ID = resolveUserId();
-/* =========================
-   Deep Link (Share to open specific content)
-   - Works with: https://t.me/<bot>/<app>?startapp=cid_123
-   - Also supports query string: ?startapp=cid_123 or ?start_param=cid_123
-========================= */
-const PENDING_CID_KEY = "ss_academy_pending_content_id";
-const BOT_USERNAME = "seylaneh_academy_bot";
-const MINIAPP_SHORTNAME = "app"; // اگر اسم مینی‌اپت چیز دیگری است، همین را تغییر بده
-
-function getStartParam(){
-  try{
-    const raw = (window.Telegram?.WebApp?.initDataUnsafe?.start_param) ||
-                (window.Telegram?.WebApp?.initDataUnsafe?.startapp) || "";
-    if (raw) return String(raw).trim();
-  }catch(e){}
-  try{
-    const qs = new URLSearchParams(location.search);
-    const q = qs.get("startapp") || qs.get("start_param") || qs.get("start") || "";
-    return String(q || "").trim();
-  }catch(e){}
-  return "";
-}
-
-function parseContentIdFromStartParam(sp){
-  const s = String(sp || "").trim();
-  if (!s) return null;
-  // Examples: cid_123 , content_123 , 123
-  const m = s.match(/(\d+)/);
-  if (!m) return null;
-  const n = Number(m[1]);
-  return Number.isFinite(n) ? n : null;
-}
-
-function setPendingContentId(id){
-  if (!id) return;
-  try{ sessionStorage.setItem(PENDING_CID_KEY, String(id)); }catch(e){}
-}
-function consumePendingContentId(){
-  try{
-    const v = sessionStorage.getItem(PENDING_CID_KEY);
-    if (!v) return null;
-    sessionStorage.removeItem(PENDING_CID_KEY);
-    const n = Number(v);
-    return Number.isFinite(n) ? n : null;
-  }catch(e){}
-  return null;
-}
-
-function tryOpenPendingContent(){
-  const cid = consumePendingContentId();
-  if (!cid) return;
-  const content = (Array.isArray(ALL_CONTENTS) ? ALL_CONTENTS : []).find(c => Number(c.id) === Number(cid));
-  if (content){
-    openPlayer(content);
-
-/* =========================
-   Share button (per content)
-   - Generates a deep link to open this content inside the Mini App
-   - Uses Telegram native share if available; otherwise copies link
-========================= */
-function buildContentDeepLink(contentId){
-  const cid = Number(contentId);
-  // Use startapp so Mini App can route user to this content
-  return `https://t.me/${BOT_USERNAME}/${MINIAPP_SHORTNAME}?startapp=cid_${cid}`;
-}
-
-async function shareContent(item){
-  try{
-    const deepLink = buildContentDeepLink(item.id);
-    const text = `🎧 ${item.title}\n\nورود مستقیم به همین قسمت:\n${deepLink}`;
-    const tg = window.Telegram?.WebApp;
-
-    // Preferred: open Telegram share dialog
-    if (tg?.openTelegramLink){
-      const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(deepLink)}&text=${encodeURIComponent(`🎧 ${item.title}`)}`;
-      tg.openTelegramLink(shareUrl);
-      return;
-    }
-
-    // Fallback: copy to clipboard
-    if (navigator.clipboard?.writeText){
-      await navigator.clipboard.writeText(text);
-      alert("لینک این قسمت کپی شد ✅\nمی‌تونی تو گروه/چت تلگرام Paste کنی.");
-      return;
-    }
-
-    // Last fallback
-    prompt("این لینک را کپی کن:", deepLink);
-  }catch(e){
-    alert("خطا در شیر کردن: " + (e?.message || e));
-  }
-}
-  } else {
-    // اگر محتوا پیدا نشد، چیزی نمایش ندهیم تا UI به هم نریزد
-    console.warn("Pending content not found:", cid);
-  }
-}
-
 
 // iOS detection (including iPadOS masquerading as Mac)
 const IS_IOS = (() => {
@@ -1248,7 +1200,7 @@ function renderItems(items){
           <button class="likeBtn ${isLiked ? "liked" : ""}" data-like="${item.id}" title="لایک">
             ${isLiked ? "♥" : "♡"} <span>${likeCount}</span>
           </button>
-          <button class="shareBtn" data-share="${item.id}" title="شیر در تلگرام">↗︎ <span>شیر</span></button>
+          <button class="btnGhost" data-send="${item.id}" title="Send">Send</button>
           <button class="btnPrimary" data-play="${item.id}">پخش</button>
         </div>
       </div>
@@ -1260,17 +1212,13 @@ function renderItems(items){
     `;
 
     card.querySelector(`[data-play="${item.id}"]`).onclick = () => openPlayer(item);
+    card.querySelector(`[data-send="${item.id}"]`).onclick = () => sendContent(item.id, item.title);
     card.querySelector(`[data-like="${item.id}"]`).onclick = async () => {
       await toggleLike(item.id);
       applyFiltersAndRender();
       if (currentPlayerContent && currentPlayerContent.id === item.id){
         $("nowLikes").textContent = `♡ ${likeCountByContent.get(item.id) || 0}`;
       }
-    };
-
-    card.querySelector(`[data-share="${item.id}"]`).onclick = (ev) => {
-      ev?.stopPropagation?.();
-      shareContent(item);
     };
 
     list.appendChild(card);
@@ -1758,9 +1706,6 @@ function initAdminUpload(){
       try{ renderCategories(); }catch(e){}
     await ensureUserOnce();
       await refreshAll();
-
-    // Deep link: بعد از لود محتوا، اگر مقصدی داشتیم مستقیم همان قسمت را باز کن
-    tryOpenPendingContent();
     try{ setupTopbarAutoHide(); }catch(e){}
 
     $("upTitle").value = "";
@@ -1859,16 +1804,31 @@ function setupTopbarAutoHide(){
 ========================= */
 window.addEventListener("DOMContentLoaded", async () => {
   try{
-    // Deep link: اگر از گروه/پیام روی لینک یک قسمت کلیک شده باشد، مقصد را نگه می‌داریم
-    const __sp = getStartParam();
-    const __cid = parseContentIdFromStartParam(__sp);
-    if (__cid) setPendingContentId(__cid);
+    // Deep link: اگر از گروه/شیر وارد شد، مقصد را ذخیره کن
+    const _sp = getStartParam();
+    const _cid = parseContentIdFromStartParam(_sp);
+    if(_cid) setPendingContentId(_cid);
 
     // 1) اول Gate (ثبت اطلاعات) — فقط یک‌بار و فقط اگر کامل نشده باشد
     await ensureUserOnce();
 
     // 2) بعد از ثبت/تأیید کاربر، اپ اصلی بالا بیاید
     await refreshAll();
+
+    // Deep link: بعد از بالا آمدن محتواها، اگر مقصد داریم برو همانجا
+    const _targetId = consumePendingContentId();
+    if(_targetId){
+      const _item = (ALL_CONTENTS || []).find(x => Number(x.id) === Number(_targetId));
+      if(_item){
+        try{
+          const _ck = getContentCategoryKey(_item);
+          if(_ck && CURRENT_CATEGORY !== _ck){
+            await selectCategory(_ck);
+          }
+        }catch(e){ /* ignore */ }
+        try{ openPlayer(_item); }catch(e){ console.error(e); }
+      }
+    }
 
     const _selectCategory = selectCategory;
     selectCategory = async (key) => {
