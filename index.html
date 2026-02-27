@@ -848,7 +848,9 @@ function consumePendingContentId(){
   }catch(e){ return null; }
 }
 function buildDeepLink(contentId){
-  return `https://t.me/${BOT_USERNAME}/${MINIAPP_SHORTNAME}?startapp=cid_${contentId}`;
+  // Bot-based deep link (پایدارترین حالت)
+  // کاربر وارد چت بات می‌شود و بات با دکمه WebApp او را مستقیم به همان قسمت می‌فرستد.
+  return `https://t.me/${BOT_USERNAME}?start=cid_${contentId}`;
 }
 async function copyToClipboard(text){
   try{
