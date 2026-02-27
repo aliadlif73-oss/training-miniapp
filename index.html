@@ -771,6 +771,19 @@ function getCidFromUrlFallback(){
   }catch(e){}
   return null;
 }
+
+async function resolveDeepLinkContentId(){
+  // تلگرام بعضی وقت‌ها start_param را با تأخیر تزریق می‌کند؛ چند بار retry می‌کنیم
+  for(let i=0;i<10;i++){
+    const sp = getStartParam();
+    const cid = parseContentIdFromStartParam(sp);
+    if(cid) return cid;
+    await new Promise(r=>setTimeout(r,150));
+  }
+  // fallback از URL (اگر WebApp با ?cid= یا #cid= باز شده باشد)
+  return getCidFromUrlFallback();
+}
+
 function setPendingContentId(id){
   if(!id) return;
   try{ sessionStorage.setItem("pending_content_id", String(id)); }catch(e){}
@@ -785,8 +798,10 @@ function consumePendingContentId(){
   }catch(e){ return null; }
 }
 function buildDeepLink(contentId){
+  // Deep link حرفه‌ای برای WebApp روی Menu Button (بدون shortname)
+  // این مدل باعث می‌شود تلگرام به‌جای باز کردن چت ربات، مستقیم مینی‌اپ را باز کند.
   const payload = `cid_${contentId}`;
-  return `https://t.me/${BOT_USERNAME}/${MINIAPP_SHORTNAME}?startapp=${encodeURIComponent(payload)}`;
+  return `https://t.me/${BOT_USERNAME}?startapp=${encodeURIComponent(payload)}`;
 }
 async function copyToClipboard(text){
   try{
@@ -1821,18 +1836,29 @@ function setupTopbarAutoHide(){
 window.addEventListener("DOMContentLoaded", async () => {
   try{
     // Deep link: اگر از گروه/شیر وارد شد، مقصد را ذخیره کن
-    const _sp = getStartParam();
-    let _cid = parseContentIdFromStartParam(_sp);
-    if(!_cid) _cid = getCidFromUrlFallback(); // fallback وقتی startapp منتقل نشود
+    const _cid = await resolveDeepLinkContentId();
     if(_cid) setPendingContentId(_cid);
-
-    // 1) اول Gate (ثبت اطلاعات) — فقط یک‌بار و فقط اگر کامل نشده باشد
+// 1) اول Gate (ثبت اطلاعات) — فقط یک‌بار و فقط اگر کامل نشده باشد
     await ensureUserOnce();
 
     // 2) بعد از ثبت/تأیید کاربر، اپ اصلی بالا بیاید
     await refreshAll();
 
-    // 3) Wrapper برای اینکه هنگام ورود به هر دسته، لایک‌ها و جذابیت آن دسته لود شود
+    // Deep link: بعد از بالا آمدن محتواها، اگر مقصد داریم برو همانجا
+    const _targetId = consumePendingContentId();
+    if(_targetId){
+      const _item = (ALL_CONTENTS || []).find(x => Number(x.id) === Number(_targetId));
+      if(_item){
+        try{
+          const _ck = getContentCategoryKey(_item);
+          if(_ck && CURRENT_CATEGORY !== _ck){
+            await selectCategory(_ck);
+          }
+        }catch(e){ /* ignore */ }
+        try{ openPlayer(_item); }catch(e){ console.error(e); }
+      }
+    }
+
     const _selectCategory = selectCategory;
     selectCategory = async (key) => {
       CURRENT_CATEGORY = key;
@@ -1846,25 +1872,6 @@ window.addEventListener("DOMContentLoaded", async () => {
 
       _selectCategory(key);
     };
-
-    // 4) Deep link: بعد از بالا آمدن محتواها، اگر مقصد داریم برو همانجا
-    const _targetId = consumePendingContentId();
-    if(_targetId){
-      const _item = (ALL_CONTENTS || []).find(x => Number(x.id) === Number(_targetId));
-      if(_item){
-        try{
-          const _ck = getContentCategoryKey(_item);
-          if(_ck && CURRENT_CATEGORY !== _ck){
-            // selectCategory اینجا wrapper است؛ await می‌کنیم تا دیتای آن دسته هم آماده شود
-            await selectCategory(_ck);
-          }
-        }catch(e){ /* ignore */ }
-        // کمی صبر برای اینکه UI دسته تثبیت شود (تلگرام WebView بعضی وقت‌ها عجول است)
-        setTimeout(() => {
-          try{ openPlayer(_item); }catch(e){ console.error(e); }
-        }, 60);
-      }
-    }
   }catch(e){
     console.error(e);
     try{ renderCategories(); }catch(_e){}
