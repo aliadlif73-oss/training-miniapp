@@ -746,97 +746,94 @@ const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const BOT_USERNAME = "seylaneh_academy_bot";
 const MINIAPP_SHORTNAME = "app"; // اگر short name مینی‌اپت چیز دیگری است، فقط همین را تغییر بده
 
+function getStartParamFromUrl(){
+  try{
+    const u = new URL(window.location.href);
+    const p = u.searchParams;
+
+    // Telegram sometimes passes start param here:
+    const candidates = [
+      p.get("tgWebAppStartParam"),
+      p.get("startapp"),
+      p.get("start_param"),
+      p.get("start"),
+      p.get("cid"),
+    ].filter(Boolean);
+
+    if (candidates.length){
+      return decodeURIComponentSafe(String(candidates[0]));
+    }
+
+    // Hash fallback: #cid_68 or #cid=68
+    const h = (u.hash || "").replace("#", "");
+    if (!h) return "";
+    return decodeURIComponentSafe(h);
+  }catch(e){
+    return "";
+  }
+}
+
+function decodeURIComponentSafe(s){
+  try{ return decodeURIComponent(s); }catch(e){ return s; }
+}
+
+function getStartParamFromInitData(){
+  try{
+    const tg = window.Telegram?.WebApp;
+    const initData = tg?.initData || "";
+    if(!initData) return "";
+    const params = new URLSearchParams(initData);
+    const sp = params.get("start_param") || params.get("startapp") || "";
+    return decodeURIComponentSafe(sp);
+  }catch(e){
+    return "";
+  }
+}
+
 function getStartParam(){
   const tg = window.Telegram?.WebApp;
 
-  // 1) initDataUnsafe (fast path)
-  const raw1 = tg?.initDataUnsafe?.start_param || tg?.initDataUnsafe?.startapp || "";
-  if (raw1) return (raw1 || "").toString().trim();
+  const unsafe = tg?.initDataUnsafe || {};
+  const rawUnsafe = unsafe.start_param || unsafe.startapp || "";
 
-  // 2) Parse signed initData querystring (some clients only provide it here)
-  try{
-    const initData = (tg?.initData || "").toString();
-    if(initData){
-      const params = new URLSearchParams(initData);
-      const raw2 = params.get("start_param") || params.get("startapp") || "";
-      if(raw2) return raw2.toString().trim();
-    }
-  }catch(e){}
+  const rawUrl = getStartParamFromUrl();
+  const rawInit = getStartParamFromInitData();
 
-  // 3) URL params (Telegram often injects tgWebAppStartParam)
+  // Priority: unsafe -> URL -> initData
+  const raw = (rawUnsafe || rawUrl || rawInit || "").toString().trim();
+  return raw;
+}
+
+async function resolveDeepLinkContentId(){
+  // Retry because Telegram may populate initDataUnsafe later
+  for (let i = 0; i < 20; i++){
+    const sp = getStartParam();
+    const cid = parseContentIdFromStartParam(sp);
+    if (cid) return cid;
+    await new Promise(r=>setTimeout(r, 150));
+  }
+
+  // Direct URL fallbacks (cid may be directly passed)
   try{
     const u = new URL(window.location.href);
-    const raw3 = u.searchParams.get("tgWebAppStartParam") || u.searchParams.get("start_param") || u.searchParams.get("startapp") || "";
-    if(raw3) return decodeURIComponent(raw3.toString().trim());
+    const p = u.searchParams;
+    const direct = p.get("cid");
+    if (direct && /^\d+$/.test(direct)) return Number(direct);
+
+    const h = (u.hash || "").replace("#","");
+    const m1 = h.match(/cid=(\d+)/i);
+    if (m1) return Number(m1[1]);
+    const m2 = h.match(/cid_(\d+)/i);
+    if (m2) return Number(m2[1]);
   }catch(e){}
 
-  return "";
-}
+  return null;
 }
 function parseContentIdFromStartParam(sp){
   // Accept: cid_123 , content_123 , 123
   const m = (sp || "").match(/(\d+)/);
   return m ? Number(m[1]) : null;
 }
-
-function getCidFromUrlFallback(){
-  try{
-    const u = new URL(window.location.href);
-
-    // Query forms
-    const directCid = u.searchParams.get("cid");
-    if(directCid && /^\d+$/.test(directCid)) return Number(directCid);
-
-    const sp = u.searchParams.get("tgWebAppStartParam") || u.searchParams.get("start_param") || u.searchParams.get("startapp") || "";
-    if(sp){
-      const decoded = decodeURIComponent(sp);
-      const m = decoded.match(/(\d+)/);
-      if(m) return Number(m[1]);
-    }
-
-    // Hash forms
-    const h = (u.hash || "").replace("#", "");
-    const m1 = h.match(/cid=(\d+)/i);
-    if(m1) return Number(m1[1]);
-    const m2 = h.match(/cid_(\d+)/i);
-    if(m2) return Number(m2[1]);
-  }catch(e){}
-  return null;
-}
-
-    // 3) Hash forms: #cid=68  OR  #cid_68
-    const h = (u.hash || "").replace("#", "");
-    const m1 = h.match(/cid=(\d+)/i);
-    if(m1) return Number(m1[1]);
-    const m2 = h.match(/cid_(\d+)/i);
-    if(m2) return Number(m2[1]);
-  }catch(e){}
-  return null;
-}
-
-async function resolveDeepLinkContentId() {
-  // 1) چند بار صبر کن تا تلگرام start_param بده (بعضی کلاینت‌ها با تأخیر inject می‌کنند)
-  for (let i = 0; i < 20; i++) {
-    const sp = getStartParam();
-    const cid = parseContentIdFromStartParam(sp);
-    if (cid) return cid;
-    await new Promise(r => setTimeout(r, 150));
-  }
-
-  // 2) اگر نیومد، از URL/Hash بخون
-  const fallback = getCidFromUrlFallback();
-  if (fallback) return fallback;
-
-  return null;
-}
-
-  // اگر نیومد، از URL/hash به عنوان fallback آخر استفاده کن
-  const fallback = getCidFromUrlFallback();
-  if(fallback) return fallback;
-
-  return null;
-}
-
 function setPendingContentId(id){
   if(!id) return;
   try{ sessionStorage.setItem("pending_content_id", String(id)); }catch(e){}
@@ -851,10 +848,7 @@ function consumePendingContentId(){
   }catch(e){ return null; }
 }
 function buildDeepLink(contentId){
-  // Deep link حرفه‌ای برای WebApp روی Menu Button (بدون shortname)
-  // این مدل باعث می‌شود تلگرام به‌جای باز کردن چت ربات، مستقیم مینی‌اپ را باز کند.
-  const payload = `cid_${contentId}`;
-  return `https://t.me/${BOT_USERNAME}?startapp=${encodeURIComponent(payload)}`;
+  return `https://t.me/${BOT_USERNAME}/${MINIAPP_SHORTNAME}?startapp=cid_${contentId}`;
 }
 async function copyToClipboard(text){
   try{
@@ -1888,51 +1882,47 @@ function setupTopbarAutoHide(){
 ========================= */
 window.addEventListener("DOMContentLoaded", async () => {
   try{
-    // Deep link: اگر از گروه/شیر وارد شد، مقصد را ذخیره کن
-    const _cid = await resolveDeepLinkContentId();
-    if(_cid) setPendingContentId(_cid);
-// 1) اول Gate (ثبت اطلاعات) — فقط یک‌بار و فقط اگر کامل نشده باشد
+    // Deep link: مقصد را با retry از تلگرام/URL بخوان
+    const deepCid = await resolveDeepLinkContentId();
+    if(deepCid) setPendingContentId(deepCid);
+
+    // 1) Gate (ثبت اطلاعات) — فقط یک‌بار و فقط اگر کامل نشده باشد
     await ensureUserOnce();
 
     // 2) بعد از ثبت/تأیید کاربر، اپ اصلی بالا بیاید
     await refreshAll();
 
-    // Deep link: بعد از بالا آمدن محتواها، اگر مقصد داریم برو همانجا
-    const _targetId = consumePendingContentId();
-    if(_targetId){
-      const _item = (ALL_CONTENTS || []).find(x => Number(x.id) === Number(_targetId));
-      if(_item){
-        try{
-          const _ck = getContentCategoryKey(_item);
-          if(_ck && CURRENT_CATEGORY !== _ck){
-            await selectCategory(_ck);
-          }
-        }catch(e){ /* ignore */ }
-        try{ openPlayer(_item); }catch(e){ console.error(e); }
+    // 3) اگر مقصد داشتیم: اول برو کتگوری، بعد اپیزود را باز کن
+    const targetId = consumePendingContentId();
+    if(targetId){
+      const item = (ALL_CONTENTS || []).find(x => Number(x.id) === Number(targetId));
+      if(item){
+        const ck = getContentCategoryKey(item);
+        if(ck){
+          await selectCategory(ck);
+        }
+        try{ openPlayer(item); }catch(e){ console.error(e); }
       }
     }
 
-    const _selectCategory = selectCategory;
-    selectCategory = async (key) => {
-      CURRENT_CATEGORY = key;
+    // 4) Watchdog: اگر به هر دلیل لیست/کتگوری‌ها خالی ماند، دوباره رندر کن
+    setTimeout(()=>{
+      try{
+        const grid = document.getElementById("catGrid");
+        const list = document.getElementById("list");
+        const hasAny = (grid && grid.children && grid.children.length) || (list && list.children && list.children.length);
+        if(!hasAny && !CURRENT_CATEGORY){
+          renderCategories();
+        }
+      }catch(e){}
+    }, 2500);
 
-      const ids = ALL_CONTENTS
-        .filter(c => getContentCategoryKey(c) === key)
-        .map(c => c.id);
-
-      try{ await loadLikesForContents(ids); } catch(e){ console.error(e); }
-      try{ await loadEngagementAllUsers(ids); } catch(e){ console.error(e); }
-
-      _selectCategory(key);
-    };
   }catch(e){
     console.error(e);
     try{ renderCategories(); }catch(_e){}
     const g = $("catGrid");
     if (g){
       g.innerHTML = `<div class="card empty">خطا در بارگذاری. اتصال Supabase/اینترنت را بررسی کنید. اگر هیچ تغییری نمی‌بینی، لینک منوبوتن را با ?v=123 عوض کن تا کش تلگرام بشکند.</div>`;
-    } else {
-      showFatal("خطا: catGrid پیدا نشد");
     }
   }
 });
