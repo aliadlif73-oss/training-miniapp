@@ -763,6 +763,64 @@ function resolveUserId() {
   return "web_preview";
 }
 const TELEGRAM_ID = resolveUserId();
+/* =========================
+   Deep Link (Share to open specific content)
+   - Works with: https://t.me/<bot>/<app>?startapp=cid_123
+   - Also supports query string: ?startapp=cid_123 or ?start_param=cid_123
+========================= */
+const PENDING_CID_KEY = "ss_academy_pending_content_id";
+
+function getStartParam(){
+  try{
+    const raw = (window.Telegram?.WebApp?.initDataUnsafe?.start_param) ||
+                (window.Telegram?.WebApp?.initDataUnsafe?.startapp) || "";
+    if (raw) return String(raw).trim();
+  }catch(e){}
+  try{
+    const qs = new URLSearchParams(location.search);
+    const q = qs.get("startapp") || qs.get("start_param") || qs.get("start") || "";
+    return String(q || "").trim();
+  }catch(e){}
+  return "";
+}
+
+function parseContentIdFromStartParam(sp){
+  const s = String(sp || "").trim();
+  if (!s) return null;
+  // Examples: cid_123 , content_123 , 123
+  const m = s.match(/(\d+)/);
+  if (!m) return null;
+  const n = Number(m[1]);
+  return Number.isFinite(n) ? n : null;
+}
+
+function setPendingContentId(id){
+  if (!id) return;
+  try{ sessionStorage.setItem(PENDING_CID_KEY, String(id)); }catch(e){}
+}
+function consumePendingContentId(){
+  try{
+    const v = sessionStorage.getItem(PENDING_CID_KEY);
+    if (!v) return null;
+    sessionStorage.removeItem(PENDING_CID_KEY);
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  }catch(e){}
+  return null;
+}
+
+function tryOpenPendingContent(){
+  const cid = consumePendingContentId();
+  if (!cid) return;
+  const content = (Array.isArray(ALL_CONTENTS) ? ALL_CONTENTS : []).find(c => Number(c.id) === Number(cid));
+  if (content){
+    openPlayer(content);
+  } else {
+    // اگر محتوا پیدا نشد، چیزی نمایش ندهیم تا UI به هم نریزد
+    console.warn("Pending content not found:", cid);
+  }
+}
+
 
 // iOS detection (including iPadOS masquerading as Mac)
 const IS_IOS = (() => {
@@ -1634,6 +1692,9 @@ function initAdminUpload(){
       try{ renderCategories(); }catch(e){}
     await ensureUserOnce();
       await refreshAll();
+
+    // Deep link: بعد از لود محتوا، اگر مقصدی داشتیم مستقیم همان قسمت را باز کن
+    tryOpenPendingContent();
     try{ setupTopbarAutoHide(); }catch(e){}
 
     $("upTitle").value = "";
@@ -1732,6 +1793,11 @@ function setupTopbarAutoHide(){
 ========================= */
 window.addEventListener("DOMContentLoaded", async () => {
   try{
+    // Deep link: اگر از گروه/پیام روی لینک یک قسمت کلیک شده باشد، مقصد را نگه می‌داریم
+    const __sp = getStartParam();
+    const __cid = parseContentIdFromStartParam(__sp);
+    if (__cid) setPendingContentId(__cid);
+
     // 1) اول Gate (ثبت اطلاعات) — فقط یک‌بار و فقط اگر کامل نشده باشد
     await ensureUserOnce();
 
