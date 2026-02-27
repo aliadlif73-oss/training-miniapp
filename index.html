@@ -747,24 +747,31 @@ const BOT_USERNAME = "seylaneh_academy_bot";
 const MINIAPP_SHORTNAME = "app"; // اگر short name مینی‌اپت چیز دیگری است، فقط همین را تغییر بده
 
 function getStartParam(){
-  // 1) Preferred: Telegram injected start_param inside initDataUnsafe
   const tg = window.Telegram?.WebApp;
-  const raw = tg?.initDataUnsafe?.start_param || tg?.initDataUnsafe?.startapp || "";
-  const v1 = (raw || "").toString().trim();
-  if (v1) return v1;
 
-  // 2) Fallback: Telegram often injects start param into URL as tgWebAppStartParam
-  // Example: ?tgWebAppStartParam=cid_68
+  // 1) initDataUnsafe (fast path)
+  const raw1 = tg?.initDataUnsafe?.start_param || tg?.initDataUnsafe?.startapp || "";
+  if (raw1) return (raw1 || "").toString().trim();
+
+  // 2) Parse signed initData querystring (some clients only provide it here)
+  try{
+    const initData = (tg?.initData || "").toString();
+    if(initData){
+      const params = new URLSearchParams(initData);
+      const raw2 = params.get("start_param") || params.get("startapp") || "";
+      if(raw2) return raw2.toString().trim();
+    }
+  }catch(e){}
+
+  // 3) URL params (Telegram often injects tgWebAppStartParam)
   try{
     const u = new URL(window.location.href);
-    const p = u.searchParams.get("tgWebAppStartParam")
-          || u.searchParams.get("startapp")
-          || u.searchParams.get("start_param")
-          || u.searchParams.get("start");
-    return (p || "").toString().trim();
-  }catch(e){
-    return "";
-  }
+    const raw3 = u.searchParams.get("tgWebAppStartParam") || u.searchParams.get("start_param") || u.searchParams.get("startapp") || "";
+    if(raw3) return decodeURIComponent(raw3.toString().trim());
+  }catch(e){}
+
+  return "";
+}
 }
 function parseContentIdFromStartParam(sp){
   // Accept: cid_123 , content_123 , 123
@@ -776,16 +783,26 @@ function getCidFromUrlFallback(){
   try{
     const u = new URL(window.location.href);
 
-    // 1) Direct query: ?cid=68
-    const qCid = u.searchParams.get("cid");
-    if(qCid && /^\d+$/.test(qCid)) return Number(qCid);
+    // Query forms
+    const directCid = u.searchParams.get("cid");
+    if(directCid && /^\d+$/.test(directCid)) return Number(directCid);
 
-    // 2) Telegram query: ?tgWebAppStartParam=cid_68
-    const tgSp = u.searchParams.get("tgWebAppStartParam") || u.searchParams.get("startapp");
-    if(tgSp){
-      const m = tgSp.toString().match(/(\d+)/);
+    const sp = u.searchParams.get("tgWebAppStartParam") || u.searchParams.get("start_param") || u.searchParams.get("startapp") || "";
+    if(sp){
+      const decoded = decodeURIComponent(sp);
+      const m = decoded.match(/(\d+)/);
       if(m) return Number(m[1]);
     }
+
+    // Hash forms
+    const h = (u.hash || "").replace("#", "");
+    const m1 = h.match(/cid=(\d+)/i);
+    if(m1) return Number(m1[1]);
+    const m2 = h.match(/cid_(\d+)/i);
+    if(m2) return Number(m2[1]);
+  }catch(e){}
+  return null;
+}
 
     // 3) Hash forms: #cid=68  OR  #cid_68
     const h = (u.hash || "").replace("#", "");
@@ -797,15 +814,21 @@ function getCidFromUrlFallback(){
   return null;
 }
 
-async function resolveDeepLinkContentId(){
-  // تلگرام بعضی وقت‌ها start_param را با تأخیر تزریق می‌کند؛ چند بار retry می‌کنیم
-  // نکته: در بسیاری از نسخه‌ها پارامتر داخل URL با نام tgWebAppStartParam می‌آید (در getStartParam پوشش داده شده)
-  for(let i=0;i<20;i++){
+async function resolveDeepLinkContentId() {
+  // 1) چند بار صبر کن تا تلگرام start_param بده (بعضی کلاینت‌ها با تأخیر inject می‌کنند)
+  for (let i = 0; i < 20; i++) {
     const sp = getStartParam();
     const cid = parseContentIdFromStartParam(sp);
-    if(cid) return cid;
-    await new Promise(r=>setTimeout(r,150));
+    if (cid) return cid;
+    await new Promise(r => setTimeout(r, 150));
   }
+
+  // 2) اگر نیومد، از URL/Hash بخون
+  const fallback = getCidFromUrlFallback();
+  if (fallback) return fallback;
+
+  return null;
+}
 
   // اگر نیومد، از URL/hash به عنوان fallback آخر استفاده کن
   const fallback = getCidFromUrlFallback();
