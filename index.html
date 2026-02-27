@@ -747,9 +747,24 @@ const BOT_USERNAME = "seylaneh_academy_bot";
 const MINIAPP_SHORTNAME = "app"; // اگر short name مینی‌اپت چیز دیگری است، فقط همین را تغییر بده
 
 function getStartParam(){
+  // 1) Preferred: Telegram injected start_param inside initDataUnsafe
   const tg = window.Telegram?.WebApp;
   const raw = tg?.initDataUnsafe?.start_param || tg?.initDataUnsafe?.startapp || "";
-  return (raw || "").toString().trim();
+  const v1 = (raw || "").toString().trim();
+  if (v1) return v1;
+
+  // 2) Fallback: Telegram often injects start param into URL as tgWebAppStartParam
+  // Example: ?tgWebAppStartParam=cid_68
+  try{
+    const u = new URL(window.location.href);
+    const p = u.searchParams.get("tgWebAppStartParam")
+          || u.searchParams.get("startapp")
+          || u.searchParams.get("start_param")
+          || u.searchParams.get("start");
+    return (p || "").toString().trim();
+  }catch(e){
+    return "";
+  }
 }
 function parseContentIdFromStartParam(sp){
   // Accept: cid_123 , content_123 , 123
@@ -760,9 +775,19 @@ function parseContentIdFromStartParam(sp){
 function getCidFromUrlFallback(){
   try{
     const u = new URL(window.location.href);
+
+    // 1) Direct query: ?cid=68
     const qCid = u.searchParams.get("cid");
     if(qCid && /^\d+$/.test(qCid)) return Number(qCid);
 
+    // 2) Telegram query: ?tgWebAppStartParam=cid_68
+    const tgSp = u.searchParams.get("tgWebAppStartParam") || u.searchParams.get("startapp");
+    if(tgSp){
+      const m = tgSp.toString().match(/(\d+)/);
+      if(m) return Number(m[1]);
+    }
+
+    // 3) Hash forms: #cid=68  OR  #cid_68
     const h = (u.hash || "").replace("#", "");
     const m1 = h.match(/cid=(\d+)/i);
     if(m1) return Number(m1[1]);
@@ -774,14 +799,19 @@ function getCidFromUrlFallback(){
 
 async function resolveDeepLinkContentId(){
   // تلگرام بعضی وقت‌ها start_param را با تأخیر تزریق می‌کند؛ چند بار retry می‌کنیم
-  for(let i=0;i<10;i++){
+  // نکته: در بسیاری از نسخه‌ها پارامتر داخل URL با نام tgWebAppStartParam می‌آید (در getStartParam پوشش داده شده)
+  for(let i=0;i<20;i++){
     const sp = getStartParam();
     const cid = parseContentIdFromStartParam(sp);
     if(cid) return cid;
     await new Promise(r=>setTimeout(r,150));
   }
-  // fallback از URL (اگر WebApp با ?cid= یا #cid= باز شده باشد)
-  return getCidFromUrlFallback();
+
+  // اگر نیومد، از URL/hash به عنوان fallback آخر استفاده کن
+  const fallback = getCidFromUrlFallback();
+  if(fallback) return fallback;
+
+  return null;
 }
 
 function setPendingContentId(id){
