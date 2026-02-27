@@ -739,156 +739,6 @@ const SUPABASE_URL = "https://szjwrqzgiekjaggqsuoh.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_hkKIc6r7pSDCJsUvoOafrg_vK8xQc0F";
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-
-// =========================
-// Deep link + Share (Send)
-// =========================
-const BOT_USERNAME = "seylaneh_academy_bot";
-const MINIAPP_SHORTNAME = "app"; // اگر short name مینی‌اپت چیز دیگری است، فقط همین را تغییر بده
-
-function getStartParamFromUrl(){
-  try{
-    const u = new URL(window.location.href);
-    const p = u.searchParams;
-
-    // Telegram sometimes passes start param here:
-    const candidates = [
-      p.get("tgWebAppStartParam"),
-      p.get("startapp"),
-      p.get("start_param"),
-      p.get("start"),
-      p.get("cid"),
-    ].filter(Boolean);
-
-    if (candidates.length){
-      return decodeURIComponentSafe(String(candidates[0]));
-    }
-
-    // Hash fallback: #cid_68 or #cid=68
-    const h = (u.hash || "").replace("#", "");
-    if (!h) return "";
-    return decodeURIComponentSafe(h);
-  }catch(e){
-    return "";
-  }
-}
-
-function decodeURIComponentSafe(s){
-  try{ return decodeURIComponent(s); }catch(e){ return s; }
-}
-
-function getStartParamFromInitData(){
-  try{
-    const tg = window.Telegram?.WebApp;
-    const initData = tg?.initData || "";
-    if(!initData) return "";
-    const params = new URLSearchParams(initData);
-    const sp = params.get("start_param") || params.get("startapp") || "";
-    return decodeURIComponentSafe(sp);
-  }catch(e){
-    return "";
-  }
-}
-
-function getStartParam(){
-  const tg = window.Telegram?.WebApp;
-
-  const unsafe = tg?.initDataUnsafe || {};
-  const rawUnsafe = unsafe.start_param || unsafe.startapp || "";
-
-  const rawUrl = getStartParamFromUrl();
-  const rawInit = getStartParamFromInitData();
-
-  // Priority: unsafe -> URL -> initData
-  const raw = (rawUnsafe || rawUrl || rawInit || "").toString().trim();
-  return raw;
-}
-
-async function resolveDeepLinkContentId(){
-  // Retry because Telegram may populate initDataUnsafe later
-  for (let i = 0; i < 20; i++){
-    const sp = getStartParam();
-    const cid = parseContentIdFromStartParam(sp);
-    if (cid) return cid;
-    await new Promise(r=>setTimeout(r, 150));
-  }
-
-  // Direct URL fallbacks (cid may be directly passed)
-  try{
-    const u = new URL(window.location.href);
-    const p = u.searchParams;
-    const direct = p.get("cid");
-    if (direct && /^\d+$/.test(direct)) return Number(direct);
-
-    const h = (u.hash || "").replace("#","");
-    const m1 = h.match(/cid=(\d+)/i);
-    if (m1) return Number(m1[1]);
-    const m2 = h.match(/cid_(\d+)/i);
-    if (m2) return Number(m2[1]);
-  }catch(e){}
-
-  return null;
-}
-function parseContentIdFromStartParam(sp){
-  // Accept: cid_123 , content_123 , 123
-  const m = (sp || "").match(/(\d+)/);
-  return m ? Number(m[1]) : null;
-}
-function setPendingContentId(id){
-  if(!id) return;
-  try{ sessionStorage.setItem("pending_content_id", String(id)); }catch(e){}
-}
-function consumePendingContentId(){
-  try{
-    const v = sessionStorage.getItem("pending_content_id");
-    if(!v) return null;
-    sessionStorage.removeItem("pending_content_id");
-    const n = Number(v);
-    return Number.isFinite(n) ? n : null;
-  }catch(e){ return null; }
-}
-function buildDeepLink(contentId){
-  // Bot-based deep link (پایدارترین حالت)
-  // کاربر وارد چت بات می‌شود و بات با دکمه WebApp او را مستقیم به همان قسمت می‌فرستد.
-  return `https://t.me/${BOT_USERNAME}?start=cid_${contentId}`;
-}
-async function copyToClipboard(text){
-  try{
-    if(navigator.clipboard?.writeText){
-      await navigator.clipboard.writeText(text);
-      return true;
-    }
-  }catch(e){}
-  // fallback
-  try{
-    const ta = document.createElement("textarea");
-    ta.value = text;
-    ta.style.position = "fixed";
-    ta.style.opacity = "0";
-    document.body.appendChild(ta);
-    ta.focus();
-    ta.select();
-    document.execCommand("copy");
-    ta.remove();
-    return true;
-  }catch(e){ return false; }
-}
-async function sendContent(contentId, title){
-  const link = buildDeepLink(contentId);
-  const message = `🎧 ${title}\n\nورود مستقیم به همین قسمت:\n${link}`;
-  const tg = window.Telegram?.WebApp;
-
-  // Prefer Telegram share UI
-  if(tg?.openTelegramLink){
-    // Using Telegram share URL (opens share sheet / chat picker)
-    tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent("🎧 " + title)}`);
-    return;
-  }
-
-  // Fallback: copy link/message
-  const ok = await copyToClipboard(message);
-  alert(ok ? "لینک برای ارسال کپی شد ✅" : message);
-}
 /* =========================
    Telegram
 ========================= */
@@ -1040,9 +890,9 @@ async function sDelete(path) {
    Categories
 ========================= */
 const CATEGORIES = [
+  { key: "mindset",title: "mazen campaign", desc: "تفکر، انگیزه، مدیریت زمان، رشد فردی" },
   { key: "sales",  title: "آموزش فروش",   desc: "مهارت‌های مذاکره، پیگیری، بستن فروش" },
   { key: "product",title: "آموزش محصول", desc: "دانش محصول، مزایا، تفاوت‌ها و کاربردها" },
-  { key: "mindset",title: "نگرشی",       desc: "تفکر، انگیزه، مدیریت زمان، رشد فردی" },
   { key: "campaign",title:"آموزش کمپین", desc: "کمپین‌سازی، اجرا، KPI و تحلیل" },
   { key: "book",  title: "خلاصه کتاب",  desc: "چکیده‌های کاربردی برای تصمیم‌گیری بهتر" },
 ];
@@ -1152,6 +1002,16 @@ function updateContinueUI(){
 ========================= */
 function selectCategory(key){
   CURRENT_CATEGORY = key;
+  // دیفالت سورت برای mazen campaign (key=mindset)
+  if(key === "mindset"){
+    SORT_MODE = "newest";
+    try{ $("sortSel").value = "newest"; }catch(e){}
+  } else {
+    // بقیه دسته‌ها همون رفتار پیش‌فرض
+    if(SORT_MODE !== $("sortSel").value){
+      try{ SORT_MODE = $("sortSel").value || SORT_MODE; }catch(e){}
+    }
+  }
   try{ document.body.classList.add("in-cat"); }catch(e){}
   detachCategoryGate();
   show($("listArea"));
@@ -1280,7 +1140,6 @@ function renderItems(items){
           <button class="likeBtn ${isLiked ? "liked" : ""}" data-like="${item.id}" title="لایک">
             ${isLiked ? "♥" : "♡"} <span>${likeCount}</span>
           </button>
-          <button class="btnGhost" data-send="${item.id}" title="Send">Send</button>
           <button class="btnPrimary" data-play="${item.id}">پخش</button>
         </div>
       </div>
@@ -1292,7 +1151,6 @@ function renderItems(items){
     `;
 
     card.querySelector(`[data-play="${item.id}"]`).onclick = () => openPlayer(item);
-    card.querySelector(`[data-send="${item.id}"]`).onclick = () => sendContent(item.id, item.title);
     card.querySelector(`[data-like="${item.id}"]`).onclick = async () => {
       await toggleLike(item.id);
       applyFiltersAndRender();
@@ -1884,47 +1742,33 @@ function setupTopbarAutoHide(){
 ========================= */
 window.addEventListener("DOMContentLoaded", async () => {
   try{
-    // Deep link: مقصد را با retry از تلگرام/URL بخوان
-    const deepCid = await resolveDeepLinkContentId();
-    if(deepCid) setPendingContentId(deepCid);
-
-    // 1) Gate (ثبت اطلاعات) — فقط یک‌بار و فقط اگر کامل نشده باشد
+    // 1) اول Gate (ثبت اطلاعات) — فقط یک‌بار و فقط اگر کامل نشده باشد
     await ensureUserOnce();
 
     // 2) بعد از ثبت/تأیید کاربر، اپ اصلی بالا بیاید
     await refreshAll();
 
-    // 3) اگر مقصد داشتیم: اول برو کتگوری، بعد اپیزود را باز کن
-    const targetId = consumePendingContentId();
-    if(targetId){
-      const item = (ALL_CONTENTS || []).find(x => Number(x.id) === Number(targetId));
-      if(item){
-        const ck = getContentCategoryKey(item);
-        if(ck){
-          await selectCategory(ck);
-        }
-        try{ openPlayer(item); }catch(e){ console.error(e); }
-      }
-    }
+    const _selectCategory = selectCategory;
+    selectCategory = async (key) => {
+      CURRENT_CATEGORY = key;
 
-    // 4) Watchdog: اگر به هر دلیل لیست/کتگوری‌ها خالی ماند، دوباره رندر کن
-    setTimeout(()=>{
-      try{
-        const grid = document.getElementById("catGrid");
-        const list = document.getElementById("list");
-        const hasAny = (grid && grid.children && grid.children.length) || (list && list.children && list.children.length);
-        if(!hasAny && !CURRENT_CATEGORY){
-          renderCategories();
-        }
-      }catch(e){}
-    }, 2500);
+      const ids = ALL_CONTENTS
+        .filter(c => getContentCategoryKey(c) === key)
+        .map(c => c.id);
 
+      try{ await loadLikesForContents(ids); } catch(e){ console.error(e); }
+      try{ await loadEngagementAllUsers(ids); } catch(e){ console.error(e); }
+
+      _selectCategory(key);
+    };
   }catch(e){
     console.error(e);
     try{ renderCategories(); }catch(_e){}
     const g = $("catGrid");
     if (g){
       g.innerHTML = `<div class="card empty">خطا در بارگذاری. اتصال Supabase/اینترنت را بررسی کنید. اگر هیچ تغییری نمی‌بینی، لینک منوبوتن را با ?v=123 عوض کن تا کش تلگرام بشکند.</div>`;
+    } else {
+      showFatal("خطا: catGrid پیدا نشد");
     }
   }
 });
