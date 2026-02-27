@@ -336,6 +336,26 @@ box-shadow: 0 1px 0 rgba(0,0,0,.02);
       gap: 8px;
       align-items:center;
 }
+
+    .shareBtn{
+      touch-action: manipulation;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.50);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 16px;
+      cursor:pointer;
+      font-family: inherit;
+      font-weight: 800;
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      transition: transform .1s ease, background .2s ease;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .shareBtn:active{ transform: scale(.98); }
+
     @media (prefers-color-scheme: dark){
       .likeBtn{
       touch-action: manipulation; background: rgba(255,255,255,.04); }
@@ -769,6 +789,8 @@ const TELEGRAM_ID = resolveUserId();
    - Also supports query string: ?startapp=cid_123 or ?start_param=cid_123
 ========================= */
 const PENDING_CID_KEY = "ss_academy_pending_content_id";
+const BOT_USERNAME = "seylaneh_academy_bot";
+const MINIAPP_SHORTNAME = "app"; // اگر اسم مینی‌اپت چیز دیگری است، همین را تغییر بده
 
 function getStartParam(){
   try{
@@ -815,6 +837,44 @@ function tryOpenPendingContent(){
   const content = (Array.isArray(ALL_CONTENTS) ? ALL_CONTENTS : []).find(c => Number(c.id) === Number(cid));
   if (content){
     openPlayer(content);
+
+/* =========================
+   Share button (per content)
+   - Generates a deep link to open this content inside the Mini App
+   - Uses Telegram native share if available; otherwise copies link
+========================= */
+function buildContentDeepLink(contentId){
+  const cid = Number(contentId);
+  // Use startapp so Mini App can route user to this content
+  return `https://t.me/${BOT_USERNAME}/${MINIAPP_SHORTNAME}?startapp=cid_${cid}`;
+}
+
+async function shareContent(item){
+  try{
+    const deepLink = buildContentDeepLink(item.id);
+    const text = `🎧 ${item.title}\n\nورود مستقیم به همین قسمت:\n${deepLink}`;
+    const tg = window.Telegram?.WebApp;
+
+    // Preferred: open Telegram share dialog
+    if (tg?.openTelegramLink){
+      const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(deepLink)}&text=${encodeURIComponent(`🎧 ${item.title}`)}`;
+      tg.openTelegramLink(shareUrl);
+      return;
+    }
+
+    // Fallback: copy to clipboard
+    if (navigator.clipboard?.writeText){
+      await navigator.clipboard.writeText(text);
+      alert("لینک این قسمت کپی شد ✅\nمی‌تونی تو گروه/چت تلگرام Paste کنی.");
+      return;
+    }
+
+    // Last fallback
+    prompt("این لینک را کپی کن:", deepLink);
+  }catch(e){
+    alert("خطا در شیر کردن: " + (e?.message || e));
+  }
+}
   } else {
     // اگر محتوا پیدا نشد، چیزی نمایش ندهیم تا UI به هم نریزد
     console.warn("Pending content not found:", cid);
@@ -1188,6 +1248,7 @@ function renderItems(items){
           <button class="likeBtn ${isLiked ? "liked" : ""}" data-like="${item.id}" title="لایک">
             ${isLiked ? "♥" : "♡"} <span>${likeCount}</span>
           </button>
+          <button class="shareBtn" data-share="${item.id}" title="شیر در تلگرام">↗︎ <span>شیر</span></button>
           <button class="btnPrimary" data-play="${item.id}">پخش</button>
         </div>
       </div>
@@ -1205,6 +1266,11 @@ function renderItems(items){
       if (currentPlayerContent && currentPlayerContent.id === item.id){
         $("nowLikes").textContent = `♡ ${likeCountByContent.get(item.id) || 0}`;
       }
+    };
+
+    card.querySelector(`[data-share="${item.id}"]`).onclick = (ev) => {
+      ev?.stopPropagation?.();
+      shareContent(item);
     };
 
     list.appendChild(card);
